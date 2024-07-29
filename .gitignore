@@ -1,0 +1,74 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
+
+# Logs
+logs/
+*.log
+logs/*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Dist directory
+dist/
+build/
+
+# Environment variables
+.env
+.env.*.local
+
+# Local directory for debugging output
+local/
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Mac OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear on a network share
+.Spotlight-V100
+.Trashes
+
+# Linux system files
+*~
+*.swp
+.swp
+Session.vim
+.netrwhist
+*~
+
+# Exclude debian packages
+*.deb
+*.deb.md5sums
+*.changes
+
