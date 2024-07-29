@@ -1,0 +1,320 @@
+const model_simple = {
+    Name: "System",
+    Components: [
+        {
+            Type: "Source",
+            Configuration: "default",
+            Name: "mySource",	
+            Qualities: {
+                "memory_consumption": "1024"
+            },
+            Ports: {
+                Inputs: [],
+                Outputs: [
+                {
+                    Type: "defaultChannel",
+                    Name: "myOutput"
+                }],
+                Supports: [
+                {
+                    Type: "defaultBudget",
+                    Name: "mySupports"
+                }],
+                Requires: []
+            },
+            
+            // Only used in case of aggregate component
+            Subcomponents: [],
+            // Only used for links within the aggregate component
+            RunsOnLinks: [],
+            OutputsToLinks: [],			
+        },
+        {
+            Type: "Sink",
+            Configuration: "default",
+            Name: "mySink",
+            Qualities: {
+                "memory_consumption": "2048"
+            },
+            Ports: {
+                Inputs: [{
+                    Type: "defaultChannel",
+                    Name: "myInput"
+                }],
+                Outputs: [],
+                Supports: [
+                {
+                    Type: "defaultBudget",
+                    Name: "mySupports"
+                }],
+                Requires: []
+            },
+            Subcomponents: [],
+            RunsOnLinks: [],
+            OutputsToLinks: [],	
+        }
+    ],
+    RunsOnLinks: [		
+    ],
+    OutputsToLinks: [
+        {
+            From: {
+                componentName: "mySource",
+                index: 0,
+                portName: "myOutput"
+            },
+            To: {
+                componentName: "mySink",
+                portName: "myInput"
+            },
+            Qualities: {
+                bandwidth: "100",
+                isWorking: "true"
+            }
+        }
+    ],
+    Qualities: {
+        SourceCount: "1",
+        SinkCount: "1"		
+    }
+}
+
+
+
+
+
+
+const model_advanced = {
+    Name: "System",
+    Components: [
+        {
+            Type: "Camera",
+            Configuration: "default",
+            Name: "cam1",
+            Ports: {
+                Inputs: [],
+                Outputs: [
+                {
+                    Type: "video_stream",
+                    Name: "video_out"
+                }],
+                Supports: [],
+                Requires: []
+            }
+        },
+        {
+            Type: "Camera",
+            Configuration: "default",
+            Name: "cam2",
+            Ports: {
+                Inputs: [],
+                Outputs: [
+                {
+                    Type: "video_stream",
+                    Name: "video_out"
+                }],
+                Supports: [],
+                Requires: []
+            }
+        },
+        {
+            Type: "AI_human_counter",
+            Configuration: "default",
+            Name: "AI_humanCounter1",
+            Ports: {
+                Inputs: [
+                {
+                    Type: "video_stream",
+                    Name: "video_in"
+                }],
+                Outputs: [
+                {
+                    Type: "integer_stream",
+                    Name: "integers_out"
+                }],
+                Supports: [],
+                Requires: [
+                {
+                    Type: "virtual_machine",
+                    Name: "VM"
+                }]				
+            }
+        },
+        {
+            Type: "AI_human_counter",
+            Configuration: "default",
+            Name: "AI_humanCounter2",
+            Ports: {
+                Inputs: [
+                {
+                    Type: "video_stream",
+                    Name: "video_in"
+                }],
+                Outputs: [
+                {
+                    Type: "integer_stream",
+                    Name: "integers_out"
+                }],
+                Supports: [],
+                Requires: [
+                {
+                    Type: "virtual_machine",
+                    Name: "VM"
+                }]				
+            }
+        },
+        {
+            Type: "Cloud",
+            Configuration: "default",
+            Name: "Cloud",
+            Ports: {
+                Inputs: [],
+                Outputs: [],
+                Requires: [],
+                Supports: [
+                {
+                    Type: "virtual_machine",
+                    Name: "vm1"
+                },
+                {
+                    Type: "virtual_machine",
+                    Name: "vm2"
+                },
+                {
+                    Type: "virtual_machine",
+                    Name: "vm3"
+                },
+                {
+                    Type: "virtual_machine",
+                    Name: "vm4"
+                }]
+            }
+        },
+        {
+            Type: "Aggregator",
+            Configuration: "default",
+            Name: "Aggregator",
+            Ports: {
+                Inputs: [
+                {
+                    Type: "integer_stream",
+                    Name: "integers_in1"
+                },
+                {
+                    Type: "integer_stream",
+                    Name: "integers_in2"
+                }],
+                Outputs: [
+                {
+                    Type: "integer_stream",
+                    Name: "integers_out"
+                }],			
+                Requires: [
+                {
+                    Type: "virtual_machine",
+                    Name: "VM"
+                }],
+                Supports: []
+            }
+        },
+        {
+            Type: "Database",
+            Configuration: "default",
+            Name: "Database",
+            Ports: {
+                Inputs: [
+                {
+                    Type: "integer_stream",
+                    Name: "integers_in"
+                }],
+                Outputs: [],
+                Requires: [],
+                Supports: []
+            }
+        }
+    ],
+    RunsOnLinks: [
+        {
+            From: {
+                componentName: "Aggregator",
+                portName: "VM"
+            },
+            To: {
+                componentName: "Cloud",
+                portName: "vm3"
+            }
+        },
+        {
+            From: {
+                componentName: "AI_humanCounter2",
+                portName: "VM"
+            },
+            To: {
+                componentName: "Cloud",
+                portName: "vm2"
+            }
+        },
+        {
+            From: {
+                componentName: "AI_humanCounter1",
+                portName: "VM"
+            },
+            To: {
+                componentName: "Cloud",
+                portName: "vm1"
+            }
+        }
+    ],
+    OutputsToLinks: [
+        {
+            From: {
+                componentName: "cam1",
+                portName: "video_out"
+            },
+            To: {
+                componentName: "AI_humanCounter1",
+                portName: "video_in"
+            }
+        },
+        {
+            From: {
+                componentName: "cam2",
+                portName: "video_out"
+            },
+            To: {
+                componentName: "AI_humanCounter2",
+                portName: "video_in"
+            }
+        },
+        {
+            From: {
+                componentName: "AI_humanCounter1",
+                portName: "integers_out"
+            },
+            To: {
+                componentName: "Aggregator",
+                portName: "integers_in1"
+            }
+        },
+        {
+            From: {
+                componentName: "AI_humanCounter2",
+                portName: "integers_out"
+            },
+            To: {
+                componentName: "Aggregator",
+                portName: "integers_in2"
+            }
+        },
+        {
+            From: {
+                componentName: "Aggregator",
+                portName: "integers_out"
+            },
+            To: {
+                componentName: "Database",
+                portName: "integers_in"
+            }
+        }
+    ]	
+}

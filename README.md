@@ -1,5 +1,5 @@
-# experiment-ivis-wrapper
 
+# expvis
 
 
 ## Getting started
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://colab-repo.intracom-telecom.com/colab-projects/extremexp/experiment-modelling/expvis.git
-git branch -M main
-git push -uf origin main
+git remote add origin https://gitlab.mff.cuni.cz/d3s/ivis/expvis.git
+git branch -M master
+git push -uf origin master
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://colab-repo.intracom-telecom.com/colab-projects/extremexp/experiment-modelling/expvis/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.mff.cuni.cz/d3s/ivis/expvis/-/settings/integrations)
 
 ## Collaborate with your team
 

@@ -1,0 +1,32 @@
+.tooltip {
+  padding: 15px;
+  border-radius: 2px;
+  background: var(--panel-background-color-contrast, #E6E9ED);
+  color: var(--panel-text-color, inherit);
+
+  :global .glyphicon {
+    // This is a FIX for Chrome. It goes nuts when one enlarges the zoom level with ctrl-wheel. The elements which are
+    // in a foreign object with position: relative suddenly start behaving as if there was no zoom.
+    position: static;
+    vertical-align: top;
+    margin-top: 2px;
+  }
+
+  .time {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .signalLabel {
+    font-weight: bold;
+    margin-right: 7px;
+  }
+
+  .signalVal {
+    margin-right: 7px;
+  }
+
+  .signalColor {
+    margin-right: 5px;
+  }
+}
