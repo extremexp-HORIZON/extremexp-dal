@@ -53,7 +53,7 @@ mysql:
 
 www:
   # HTTP interface to listen on
-  host: 0.0.0.0
+  host: 10.10.73.123
   # HTTP(S) port to listen on
   trustedPort: 8443
   trustedPortIsHttps: true
@@ -62,8 +62,8 @@ www:
   apiPort: 8445
   apiPortIsHttps: true
 
-  trustedUrlBase: https://localhost:8443
-  sandboxUrlBase: https://localhost:8444
+  trustedUrlBase: https://10.10.73.123:8443
+  sandboxUrlBase: https://10.10.73.123:8444
 
   # Secret for signing the session ID cookie
   secret: jd8j3hf785hng783k

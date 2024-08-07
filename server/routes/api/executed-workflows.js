@@ -15,6 +15,7 @@ const SCHEMA = {
     experimentId: 'string',
     start: 'string',
     end: 'string',
+    order: 'int',
     metadata: 'object',
     comment: 'string',
     parameters: [{
@@ -108,7 +109,34 @@ router.putAsync('/executed-workflows', async (req, res) => {
         });
 
         if (response.result === 'created') {
-            return res.status(201).json({ message: response, document: response.body});
+            if (body.hasOwnProperty("experimentId")){
+                try {
+                    const executedExperiment = await elasticsearch.get({
+                        index: 'executed_experiments',
+                        id: body.experimentId,
+                    });
+                    executedExperiment._source.workflowIds.push(response._id);
+                    console.log(executedExperiment._source.workflowIds);
+
+                    const updateResponse = await elasticsearch.update({
+                        index: 'executed_experiments',
+                        id: body.experimentId,
+                        body: {
+                            doc: {
+                                workflowIds: executedExperiment._source.workflowIds
+                            }
+                        }
+                    });
+                    if (updateResponse.result !== 'updated') {
+                        console.error('Error updating executed experiment:', response.body);
+                        return res.status(400).json({ error: 'Failed to update executed experiment' });
+                    }
+                } catch (error){
+                    console.error('Error adding executed workflow:', error);
+                    return res.status(404).json({ error: 'Executed experiment not found' });
+                }
+            }
+            return res.status(201).json({ workflowId: response._id});
         } else {
             console.error('Error adding executed workflow:', response);
             return res.status(400).json({ error: 'Failed to add executed workflow' });

@@ -16,10 +16,11 @@ const EXECUTED_EXPERIMENTS_SCHEMA = {
     end: 'string',
     intent: 'string',
     metadata: 'object',
-    // RUNNING, STOPPED, PAUSED, NEW, COMPLETED
+    // for status: NEW, RUNNING, PAUSED, STOPPED, COMPLETED
     status: 'string',
     comment: 'string',
-    workflowIds: [ 'string' ]
+    model: 'string',
+    workflowIds: ['string']
 };
 
 router.putAsync('/executed-experiments', async (req, res) => {
@@ -31,10 +32,16 @@ router.putAsync('/executed-experiments', async (req, res) => {
             return res.status(400).json({ error: `Validation error: ${validationResult}` });
         }
 
+        // add new to the newly created executed experiment
+        body.status = "new";
+        if (!body.hasOwnProperty("workflowIds")){
+            body.workflowIds = [];
+        }
+
         const response = await elasticsearch.index({
             index: 'executed_experiments',
             id: body.id,
-            body
+            body,
         });
 
         if (response.result === 'created') {
@@ -55,11 +62,11 @@ router.postAsync('/executed-experiments/:experimentId', async (req, res) => {
         const body = req.body;
 
         try{
-            const existingWorkflow = await elasticsearch.get({
+            const existingExperiment = await elasticsearch.get({
                 index: 'executed_experiments',
                 id: experimentId
             });
-            if (!existingWorkflow) {
+            if (!existingExperiment) {
                 return res.status(404).json({ error: 'Executed experiment not found' });
             }
         }
@@ -91,6 +98,35 @@ router.postAsync('/executed-experiments/:experimentId', async (req, res) => {
     }
 });
 
+router.getAsync('/executed-experiments', async (req, res) => {
+    try {
+        let experimentsResponse;
+        try {
+            experimentsResponse = await elasticsearch.search({
+                index: 'executed_experiments',
+                body: {
+                    query: {
+                        match_all: {}
+                    }
+                }
+            });
+        } catch (error) {
+            return res.status(404).json({ error: 'Executed experiments not found' });
+        }
+
+        if (!experimentsResponse.hits || experimentsResponse.hits.total.value === 0) {
+            return res.status(404).json({ error: 'Executed experiments not found' });
+        }
+
+        const executed_experiments = experimentsResponse.hits.hits.map(hit => hit._source);
+        res.status(200).json({ executed_experiments });
+    } catch (error) {
+        console.error('Error retrieving executed experiments:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
 router.getAsync('/executed-experiments/:experimentId', async (req, res) => {
     try {
         const { experimentId } = req.params;
@@ -110,6 +146,7 @@ router.getAsync('/executed-experiments/:experimentId', async (req, res) => {
 
 
         const experiment = experimentResponse._source;
+
         res.status(200).json({ experiment });
     } catch (error) {
         console.error('Error retrieving executed experiment:', error);
