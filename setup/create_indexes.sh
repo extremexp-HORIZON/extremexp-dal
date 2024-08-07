@@ -38,6 +38,7 @@ executed_experiments_mapping='
     "properties": {
       "id": { "type": "keyword" },
       "name": { "type": "text" },
+      "status": { "type": "text" },
       "start": { "type": "date" },
       "end": { "type": "date" },
       "metadata": {
@@ -47,6 +48,7 @@ executed_experiments_mapping='
           "value": { "type": "text" }
         }
       },
+      "model": { "type": "text" },
       "comment": { "type": "text" },
       "workflowIds": {
         "type": "keyword"
@@ -70,6 +72,7 @@ executed_workflows_mappings='
             "deployedWorkflow": { "type": "text" },
             "start": { "type": "date" },
             "end": { "type": "date" },
+            "order": {"type": "integer" },
             "metadata": {
                 "type": "nested",
                 "properties": {
