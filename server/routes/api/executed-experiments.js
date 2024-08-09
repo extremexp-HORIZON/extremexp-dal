@@ -104,6 +104,8 @@ router.getAsync('/executed-experiments', async (req, res) => {
         try {
             experimentsResponse = await elasticsearch.search({
                 index: 'executed_experiments',
+                size: 1000,
+                scroll: '1m', // Keep the search context alive for 1 minute
                 body: {
                     query: {
                         match_all: {}
@@ -118,7 +120,13 @@ router.getAsync('/executed-experiments', async (req, res) => {
             return res.status(404).json({ error: 'Executed experiments not found' });
         }
 
-        const executed_experiments = experimentsResponse.hits.hits.map(hit => hit._source);
+        const executed_experiments = experimentsResponse.hits.hits.map(hit => ({
+            [hit._id]: {
+                id: hit._id,
+                ...hit._source
+            }
+
+        }));
         res.status(200).json({ executed_experiments });
     } catch (error) {
         console.error('Error retrieving executed experiments:', error);
@@ -145,11 +153,93 @@ router.getAsync('/executed-experiments/:experimentId', async (req, res) => {
         }
 
 
-        const experiment = experimentResponse._source;
+        const experiment = experimentResponse;
 
-        res.status(200).json({ experiment });
+        return res.status(200).json({
+            experiment: {
+                id:experiment._id,
+                ...experiment._source
+            }
+        });
     } catch (error) {
         console.error('Error retrieving executed experiment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+const EXPERIMENTS_WORKFLOW_SORT_SCHEMA = {
+    precedence: 'object',
+};
+
+// MA: use the following function to sort the workflow list
+function moveElementBeforeAnother(array, a, b) {
+
+    // Find the indices of elements a and b
+    const indexA = array.indexOf(a);
+    const indexB = array.indexOf(b);
+    console.log("done here");
+
+    // If either element is not found, return the array as is
+    if (indexA === -1 || indexB === -1) {
+        return array;
+    }
+
+    // Remove element b from its original position
+    array.splice(indexB, 1);
+
+    // Recalculate index of a in case indexB was before it
+    const newIndexA = array.indexOf(a);
+
+    // Insert element b before element a
+    array.splice(newIndexA+1, 0, b);
+    return array;
+}
+
+
+router.postAsync('/executed-experiments-sort-workflows/:experimentId', async (req, res) => {
+    try {
+        const { experimentId } = req.params;
+        let experimentResponse;
+        try {
+            experimentResponse = await elasticsearch.get({
+                index: 'executed_experiments',
+                id: experimentId
+            });
+        } catch (error){
+            return res.status(404).json({ error: 'Executed experiment not found' });
+        }
+
+        const validationResult = validateSchema(req.body, EXPERIMENTS_WORKFLOW_SORT_SCHEMA);
+        if (validationResult || !req.body.precedence) {
+            return res.status(400).json({ error: `Validation error: ${validationResult}, expected precedence` });
+        }
+
+        const precedence = req.body.precedence;
+        let workflowIdList = experimentResponse._source.workflowIds;
+        Object.keys(precedence).forEach((key) => {
+            workflowIdList = moveElementBeforeAnother(workflowIdList, key, precedence[key]);
+        });
+
+        const response = await elasticsearch.update({
+            index: 'executed_experiments',
+            id: experimentId,
+            body: { doc:
+                    {
+                        "workflowId": workflowIdList,
+                    }
+            }
+        });
+        console.log(response);
+        if (response.result === "updated" || response.result === "noop" ){
+            return res.status(200).json(workflowIdList);
+        }
+        else{
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+
+    } catch (error) {
+        console.error('Error ordering workflows of executed experiments:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
