@@ -16,6 +16,8 @@ const SCHEMA = {
     start: 'string',
     end: 'string',
     order: 'int',
+    // scheduled, running, completed
+    status: 'string',
     metadata: 'object',
     comment: 'string',
     parameters: [{

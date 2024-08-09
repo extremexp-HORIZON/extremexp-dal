@@ -69,6 +69,7 @@ executed_workflows_mappings='
             "id": { "type": "keyword" },
             "experimentId" : { "type": "text"},
             "name": { "type": "text" },
+            "status": { "type": "text" },
             "deployedWorkflow": { "type": "text" },
             "start": { "type": "date" },
             "end": { "type": "date" },
