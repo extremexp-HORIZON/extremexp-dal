@@ -104,7 +104,7 @@ router.putAsync('/executed-workflows', async (req, res) => {
         if (validationError) {
             return res.status(400).json({ error: validationError });
         }
-
+        body.status = "scheduled";
         const response = await elasticsearch.index({
             index: 'executed_workflows',
             body
