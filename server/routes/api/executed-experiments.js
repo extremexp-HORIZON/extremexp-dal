@@ -3,6 +3,8 @@
 const elasticsearch = require('../../../ivis-core/server/lib/elasticsearch');
 const {validateSchema} = require("./util");
 const router = require('../../../ivis-core/server/lib/router-async').create();
+const { exec, execSync } = require('child_process');
+const {toJSON} = require("express-session/session/cookie");
 
 const REQUIRED_FIELDS = ['name', 'intent'];
 
@@ -154,11 +156,21 @@ router.getAsync('/executed-experiments/:experimentId', async (req, res) => {
 
 
         const experiment = experimentResponse;
+        let modelJSON;
+        if (experiment._source.model && process.env.DMS_PATH) {
+            const shellout = execSync(`bash ${process.env.DMS_PATH}/run.sh \'${experiment._source.model}\'`)
+            try{
+                modelJSON = JSON.parse(shellout.toString("utf8"),null, 2);
 
+            }
+            catch (error){
+                modelJSON = `error: ${error}`;            }
+        }
         return res.status(200).json({
             experiment: {
                 id:experiment._id,
-                ...experiment._source
+                ...experiment._source,
+                modelJSON:modelJSON
             }
         });
     } catch (error) {
