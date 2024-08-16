@@ -11,7 +11,7 @@ output_file="$DMS_PATH/input.json"
 
 echo "$input_text" > "$input_file"
 
-java -jar $DMS_PATH/dms-1.0-SNAPSHOT-jar-with-dependencies.jar "$input_file" --json
+java -jar $DMS_PATH/repo/dms-1.0-SNAPSHOT-jar-with-dependencies.jar "$input_file" --json
 
 output=$(cat "$output_file")
 rm "$input_file" "$output_file"

@@ -1,0 +1,3 @@
+[submodule "services/dms/repo"]
+	path = services/dms/repo
+	url = https://colab-repo.intracom-telecom.com/colab-projects/extremexp/experiment-modelling/design-model-storage/design-model-storage.git
