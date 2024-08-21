@@ -62,8 +62,8 @@ www:
   apiPort: 8445
   apiPortIsHttps: true
 
-  trustedUrlBase: https://10.10.73.123:8443
-  sandboxUrlBase: https://10.10.73.123:8444
+  trustedUrlBase: https://expvis.smartarch.cz
+  sandboxUrlBase: https://sbox.expvis.smartarch.cz
 
   # Secret for signing the session ID cookie
   secret: jd8j3hf785hng783k
