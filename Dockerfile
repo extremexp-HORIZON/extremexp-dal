@@ -18,7 +18,10 @@ COPY . .
 
 
 # Initialize and update Git submodules
-# RUN git submodule update --init --recursive --remote
+RUN git config --global credential.helper store && \
+    echo $GIT_CREDNTIALS > ~/.git-credentials && $\
+    git submodule update --init --recursive --remote
+
 RUN cd /app/services/dms/repo && make
 
 COPY ./server/config ./config
