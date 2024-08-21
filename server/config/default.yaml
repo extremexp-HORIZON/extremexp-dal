@@ -2,12 +2,14 @@ enabledLanguages:
   - en-US
 
 www:
+  host: expvis-expvis-1
+
   trustedPort: 8443
-  trustedPortIsHttps: false
+  trustedPortIsHttps: true
   sandboxPort: 8444
-  sandboxPortIsHttps: false
+  sandboxPortIsHttps: true
   apiPort: 8445
-  apiPortIsHttps: false
+  apiPortIsHttps: true
 
   trustedUrlBase: https://expvis.smartarch.cz
   sandboxUrlBase: https://sbox.expvis.smartarch.cz

@@ -53,7 +53,7 @@ mysql:
 
 www:
   # HTTP interface to listen on
-  host: 10.10.73.123
+  host: https://expvis.smartarch.cz
   # HTTP(S) port to listen on
   trustedPort: 8443
   trustedPortIsHttps: true
