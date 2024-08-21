@@ -160,6 +160,7 @@ router.getAsync('/executed-experiments/:experimentId', async (req, res) => {
         if (experiment._source.model && process.env.DMS_PATH) {
             const shellout = execSync(`bash ${process.env.DMS_PATH}/run.sh \'${experiment._source.model}\'`)
             try{
+                console.log(shellout);
                 modelJSON = JSON.parse(shellout.toString("utf8"),null, 2);
 
             }
@@ -237,7 +238,7 @@ router.postAsync('/executed-experiments-sort-workflows/:experimentId', async (re
             id: experimentId,
             body: { doc:
                     {
-                        "workflowId": workflowIdList,
+                        "workflowIds": workflowIdList,
                     }
             }
         });
