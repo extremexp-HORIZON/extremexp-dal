@@ -46,14 +46,16 @@ This project is set up using Docker and Docker Compose to create a development e
      You should see a line similar to:
 
      ```
-     https://username:password@github.com
+     https://username:password@colab-repo.intracom-telecom.com
      ```
 
      Copy this line and set it as the `GIT_CREDENTIALS` environment variable:
 
      ```bash
-     export GIT_CREDENTIALS="https://username:password@github.com"
+     export GIT_CREDENTIALS="https://username:password@colab-repo.intracom-telecom.com"
      ```
+
+
 
    - **Update the Dockerfile**:
 
@@ -65,6 +67,13 @@ This project is set up using Docker and Docker Compose to create a development e
          git submodule update --init --recursive --remote
      ```
 
+    ** NOTE ** if the above method did not work, write the credentials directly in the Docker file.
+
+     ```dockerfile
+     RUN git config --global credential.helper store && \
+         echo "https://username:password@colab-repo.intracom-telecom.com" > ~/.git-credentials && \
+         git submodule update --init --recursive --remote
+     ```
 3. **Update Configuration for Local Development:**
 
    In the `server/config/development.yaml` file, update the following settings to reflect your local environment:
