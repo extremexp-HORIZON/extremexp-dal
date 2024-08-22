@@ -1,4 +1,4 @@
-# ExpVis Project
+# IVIS Wrapper for ExtremeXP
 
 This project is set up using Docker and Docker Compose to create a development environment for the `expvis` application. The environment includes services for MariaDB, Redis, and Elasticsearch, as well as a custom Node.js application with various dependencies.
 
@@ -10,7 +10,7 @@ This project is set up using Docker and Docker Compose to create a development e
 ## Project Structure
 
 - **Dockerfile**: Sets up a Node.js environment with OpenJDK 17, Maven 3.9.4, and Git. It also installs necessary npm packages and prepares the application for development.
-- **docker-compose.yml**: Defines the services required for the project, including MariaDB, Redis, Elasticsearch, and the ExpVis application.
+- **docker-compose.yml**: Defines the services required for the project, including MariaDB, Redis, Elasticsearch, and the `expvis` application.
 
 ## Setup Instructions
 
@@ -125,7 +125,7 @@ This project is set up using Docker and Docker Compose to create a development e
    - **MariaDB** on port `3305`
    - **Redis** on port `6380`
    - **Elasticsearch** on ports `9200` and `9300`
-   - **ExpVis Application** on ports `8443`, `8444`, and `8445`
+   - **expvis Application** on ports `8443`, `8444`, and `8445`
 
 6. **Access the Application:**
 
