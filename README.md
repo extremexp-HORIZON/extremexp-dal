@@ -1,93 +1,160 @@
+# ExpVis Project
 
-# expvis
+This project is set up using Docker and Docker Compose to create a development environment for the `expvis` application. The environment includes services for MariaDB, Redis, and Elasticsearch, as well as a custom Node.js application with various dependencies.
 
+## Prerequisites
 
-## Getting started
+- Docker
+- Docker Compose
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Project Structure
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **Dockerfile**: Sets up a Node.js environment with OpenJDK 17, Maven 3.9.4, and Git. It also installs necessary npm packages and prepares the application for development.
+- **docker-compose.yml**: Defines the services required for the project, including MariaDB, Redis, Elasticsearch, and the ExpVis application.
 
-## Add your files
+## Setup Instructions
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+1. **Clone the Repository:**
 
-```
-cd existing_repo
-git remote add origin https://gitlab.mff.cuni.cz/d3s/ivis/expvis.git
-git branch -M master
-git push -uf origin master
-```
+   ```bash
+   git clone --recurse-submodules <repository_url>
+   cd <repository_directory>
+   ```
 
-## Integrate with your tools
+2. **Configure Git Credentials:**
 
-- [ ] [Set up project integrations](https://gitlab.mff.cuni.cz/d3s/ivis/expvis/-/settings/integrations)
+   The Dockerfile requires Git credentials to initialize and update submodules. Follow these steps to securely store and use your credentials:
 
-## Collaborate with your team
+   - **Store your Git credentials**:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+     Run the following command to store your Git credentials:
 
-## Test and Deploy
+     ```bash
+     git config --global credential.helper store
+     ```
 
-Use the built-in continuous integration in GitLab.
+     Next, execute any Git command that requires authentication (e.g., `git pull`). You will be prompted for your username and password, which will be stored in `~/.git-credentials`.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+   - **Retrieve and set the `GIT_CREDENTIALS` environment variable**:
 
-***
+     Open the `~/.git-credentials` file to view your stored credentials:
 
-# Editing this README
+     ```bash
+     cat ~/.git-credentials
+     ```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+     You should see a line similar to:
 
-## Suggestions for a good README
+     ```
+     https://username:password@github.com
+     ```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+     Copy this line and set it as the `GIT_CREDENTIALS` environment variable:
 
-## Name
-Choose a self-explaining name for your project.
+     ```bash
+     export GIT_CREDENTIALS="https://username:password@github.com"
+     ```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+   - **Update the Dockerfile**:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+     Ensure that the Dockerfile uses the `GIT_CREDENTIALS` environment variable:
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+     ```dockerfile
+     RUN git config --global credential.helper store && \
+         echo "${GIT_CREDENTIALS}" > ~/.git-credentials && \
+         git submodule update --init --recursive --remote
+     ```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+3. **Update Configuration for Local Development:**
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+   In the `server/config/development.yaml` file, update the following settings to reflect your local environment:
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+   ```yaml
+   enabledLanguages:
+   - en-US
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+   www:
+     host: 0.0.0.0
+     trustedPort: 8443
+     trustedPortIsHttps: false
+     sandboxPort: 8444
+     sandboxPortIsHttps: false
+     apiPort: 8445
+     apiPortIsHttps: false
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+     # Update the following URLs to use localhost for local development
+     trustedUrlBase: https://localhost:8443
+     sandboxUrlBase: https://localhost:8444
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+   mysql:
+     host: expvis-mariadb-1
+     user: expvis
+     password: expvis
+     database: expvis
+     port: 3306
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+   elasticsearch:
+     host: expvis-elasticsearch-1
+     port: 9200
+   ```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+   This configuration change ensures that the application correctly points to local services and uses localhost URLs during development.
 
-## License
-For open source projects, say how it is licensed.
+4. **Build the Docker Images:**
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+   ```bash
+   docker-compose build
+   ```
+
+5. **Start the Services:**
+
+   ```bash
+   docker-compose up
+   ```
+
+   This will start the following services:
+   - **MariaDB** on port `3305`
+   - **Redis** on port `6380`
+   - **Elasticsearch** on ports `9200` and `9300`
+   - **ExpVis Application** on ports `8443`, `8444`, and `8445`
+
+6. **Access the Application:**
+
+   Once all services are up and running, you can access the ExpVis application via:
+
+   - [https://localhost:8443](https://localhost:8443)
+   - [https://localhost:8444](https://localhost:8444)
+   - [https://localhost:8445](https://localhost:8445)
+
+## Additional Information
+
+- The Dockerfile installs OpenJDK 17 and Maven 3.9.4 to support Java-based components of the application.
+- Submodules are initialized and updated to ensure that all dependencies are properly fetched.
+- The `wait-for-it.sh` script is used to ensure that dependent services (MariaDB, Elasticsearch) are available before starting the application.
+- Custom setup scripts and configurations are copied and executed as needed.
+
+## Environment Variables
+
+The following environment variables are set in the `docker-compose.yml`:
+
+- **NODE_ENV**: `development`
+- **MYSQL_USER**: `expvis`
+- **MYSQL_PASSWORD**: `expvis`
+- **MYSQL_DATABASE**: `expvis`
+- **MYSQL_HOST**: `expvis-mariadb-1`
+- **REDIS_HOST**: `expvis-redis-1`
+- **ELASTICSEARCH_HOST**: `http://elasticsearch:9200`
+- **DMS_PATH**: `/app/services/dms`
+
+## Volumes
+
+The following volumes are used to persist data:
+
+- **mariadb_data**: Stores MariaDB data
+- **redis_data**: Stores Redis data
+- **elasticsearch_data**: Stores Elasticsearch data
+
+## Notes
+
+- Ensure that the Git credentials are properly set in the environment to allow submodule updates.
+- The application uses a specific branch (`extremeXP`) for the `ivis-core` repository.
