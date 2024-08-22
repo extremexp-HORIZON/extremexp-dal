@@ -1,4 +1,4 @@
-# IVIS Wrapper for ExtremeXP
+# ExtremeXP IVIS Wrapper
 
 This project is set up using Docker and Docker Compose to create a development environment for the `expvis` application. The environment includes services for MariaDB, Redis, and Elasticsearch, as well as a custom Node.js application with various dependencies.
 
