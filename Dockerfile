@@ -19,9 +19,9 @@ COPY . .
 
 # Initialize and update Git submodules
 RUN git config --global credential.helper store && \
-    echo $GIT_CREDNTIALS > ~/.git-credentials && $\
-    git submodule update --init --recursive --remote
-
+    echo "${GIT_CREDENTIALS" > ~/.git-credentials && \
+    git submodule update --init --recursive --remote --merge
+ 
 RUN cd /app/services/dms/repo && make
 
 COPY ./server/config ./config
@@ -32,6 +32,7 @@ RUN cd server && npm install express-ws
 
 RUN cd client && npm install
 
+RUN cd ivis-core && git checkout extremeXP
 RUN cd ivis-core/server && npm install
 RUN cd ivis-core/client && npm install
 RUN cd ivis-core/shared && npm install
