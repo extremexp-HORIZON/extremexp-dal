@@ -1,0 +1,66 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: expvis
+      MYSQL_DATABASE: expvis
+      MYSQL_USER: expvis
+      MYSQL_PASSWORD: expvis
+    ports:
+      - "3305:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  # todo: configuration yaml file - ports, passwords
+  expvis:
+    build:
+      context: ${EXPVIS_REPO_PATH}
+      dockerfile: ${EXPVIS_REPO_PATH}/Dockerfile
+    environment:
+      NODE_ENV: development
+      MYSQL_USER: expvis
+      MYSQL_PASSWORD: expvis
+      MYSQL_DATABASE: expvis
+      MYSQL_HOST: expvis-mariadb-1
+      REDIS_HOST: expvis-redis-1
+      ELASTICSEARCH_HOST: http://elasticsearch:9200
+      DMS_PATH: /app/services/dms
+    ports:
+      - "8443:8443"
+      - "8444:8444"
+      - "8445:8445"
+    depends_on:
+      - mariadb
+      - redis
+      - elasticsearch
+    volumes:
+      - ${EXPVIS_REPO_PATH}/server/knex/migrations:/app/knex/migrations 
+    command: >
+      /bin/bash -c "
+      ./wait-for-it.sh expvis-mariadb-1:3306 --timeout=60 --strict &&
+      ./wait-for-it.sh expvis-elasticsearch-1:9200 --timeout=60 --strict &&
+      node /app/server/index.js
+      "
+
+volumes:
+  mariadb_data:
+  redis_data:
+  elasticsearch_data:
