@@ -14,6 +14,8 @@ This project is set up using Docker and Docker Compose to create a development e
 
 ## Setup Instructions
 
+*Note that these are the setup instructions for running `expvis` in Docker. For installation on your local machine (for development), follow the [instructions in `ivis-core`](https://github.com/smartarch/ivis-core/wiki/Local-installation-for-development).*
+
 1. **Clone the Repository:**
 
    ```bash
@@ -67,7 +69,7 @@ This project is set up using Docker and Docker Compose to create a development e
          git submodule update --init --recursive --remote
      ```
 
-    ** NOTE ** if the above method did not work, write the credentials directly in the Docker file.
+     **NOTE** if the above method did not work, write the credentials directly in the Docker file.
 
      ```dockerfile
      RUN git config --global credential.helper store && \
