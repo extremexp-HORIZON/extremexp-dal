@@ -14,6 +14,8 @@ This project is set up using Docker and Docker Compose to create a development e
 
 ## Setup Instructions
 
+*Note that these are the setup instructions for running `expvis` in Docker. For installation on your local machine (for development), follow the [instructions in `ivis-core`](https://github.com/smartarch/ivis-core/wiki/Local-installation-for-development).*
+
 1. **Clone the Repository:**
 
    ```bash
@@ -67,47 +69,29 @@ This project is set up using Docker and Docker Compose to create a development e
          git submodule update --init --recursive --remote
      ```
 
-    ** NOTE ** if the above method did not work, write the credentials directly in the Docker file.
+     **NOTE** if the above method did not work, write the credentials directly in the Docker file.
 
      ```dockerfile
      RUN git config --global credential.helper store && \
          echo "https://username:password@colab-repo.intracom-telecom.com" > ~/.git-credentials && \
          git submodule update --init --recursive --remote
      ```
-3. **Update Configuration for Local Development:**
 
-   In the `server/config/development.yaml` file, update the following settings to reflect your local environment:
+3. **Update Configuration:**
+
+   By default, the app is set to run on localhost on HTTP (via Docker). If you want to access it via a different URL and use HTTPS, create the `server/config/development.yaml` file and set the URL configuration:
 
    ```yaml
-   enabledLanguages:
-   - en-US
-
    www:
-     host: 0.0.0.0
-     trustedPort: 8443
-     trustedPortIsHttps: false
-     sandboxPort: 8444
-     sandboxPortIsHttps: false
-     apiPort: 8445
-     apiPortIsHttps: false
-
-     # Update the following URLs to use localhost for local development
-     trustedUrlBase: https://localhost:8443
-     sandboxUrlBase: https://localhost:8444
-
-   mysql:
-     host: expvis-mariadb-1
-     user: expvis
-     password: expvis
-     database: expvis
-     port: 3306
-
-   elasticsearch:
-     host: expvis-elasticsearch-1
-     port: 9200
+     trustedPortIsHttps: true
+     sandboxPortIsHttps: true
+     apiPortIsHttps: true
+   
+     trustedUrlBase: https://expvis.smartarch.cz
+     sandboxUrlBase: https://sbox.expvis.smartarch.cz
    ```
-
-   This configuration change ensures that the application correctly points to local services and uses localhost URLs during development.
+   
+   Possibly also update other configuration (e.g., `mysql.password`). See [`server/config/default.yaml`](server/config/default.yaml) for default values.
 
 4. **Build the Docker Images:**
 

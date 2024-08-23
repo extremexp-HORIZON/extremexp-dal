@@ -1,18 +1,18 @@
 enabledLanguages:
-  - en-US
+- en-US
 
 www:
   host: expvis-expvis-1
 
   trustedPort: 8443
-  trustedPortIsHttps: true
+  trustedPortIsHttps: false
   sandboxPort: 8444
-  sandboxPortIsHttps: true
+  sandboxPortIsHttps: false
   apiPort: 8445
-  apiPortIsHttps: true
+  apiPortIsHttps: false
 
-  trustedUrlBase: https://expvis.smartarch.cz
-  sandboxUrlBase: https://sbox.expvis.smartarch.cz
+  trustedUrlBase: http://localhost:8443
+  sandboxUrlBase: http://localhost:8444
 
 mysql:
   host: expvis-mariadb-1
