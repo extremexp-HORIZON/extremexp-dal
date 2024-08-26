@@ -19,7 +19,7 @@ COPY . .
 
 # Initialize and update Git submodules
 RUN git config --global credential.helper store && \
-    echo "${GIT_CREDENTIALS" > ~/.git-credentials && \
+    echo "$GIT_CREDENTIALS" > ~/.git-credentials && \
     git submodule update --init --recursive --remote --merge
  
 RUN cd /app/services/dms/repo && make

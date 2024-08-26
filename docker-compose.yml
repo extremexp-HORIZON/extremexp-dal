@@ -3,7 +3,7 @@ services:
     image: mariadb:latest
     environment:
       MYSQL_ROOT_PASSWORD: expvis
-      MYSQL_DATABASE: expvis
+      MYQL_DATABASE: expvis
       MYSQL_USER: expvis
       MYSQL_PASSWORD: expvis
     ports:
@@ -36,12 +36,6 @@ services:
       dockerfile: ${EXPVIS_REPO_PATH}/Dockerfile
     environment:
       NODE_ENV: development
-      MYSQL_USER: expvis
-      MYSQL_PASSWORD: expvis
-      MYSQL_DATABASE: expvis
-      MYSQL_HOST: expvis-mariadb-1
-      REDIS_HOST: expvis-redis-1
-      ELASTICSEARCH_HOST: http://elasticsearch:9200
       DMS_PATH: /app/services/dms
     ports:
       - "8443:8443"
