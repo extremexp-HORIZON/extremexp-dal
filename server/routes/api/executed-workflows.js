@@ -15,7 +15,6 @@ const WORKFLOW_SCHEMA = {
     experimentId: 'string',
     start: 'string',
     end: 'string',
-    order: 'int',
     // scheduled, running, completed, failed
     status: 'string',
     metadata: 'object',
