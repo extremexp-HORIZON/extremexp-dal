@@ -50,14 +50,14 @@ em.on('app.installAPIRoutes', app => {
     const outputDatasetsApi = require('./routes/api/output-datasets');
 
     console.log("install api");
-    app.use('/api', signalsApi);
+    // app.use('/api', signalsApi);
     app.use('/api', executedWorkflowsApi);
     app.use('/api', executedExperimentsApi);
-    app.use('/api', executedTasksApi);
+    // app.use('/api', executedTasksApi);
     app.use('/api', metricsApi);
-    app.use('/api', parametersApi);
-    app.use('/api', inputDatasetsApi);
-    app.use('/api', outputDatasetsApi);
+    // app.use('/api', parametersApi);
+    // app.use('/api', inputDatasetsApi);
+    // app.use('/api', outputDatasetsApi);
     console.log("install api");
 });
 

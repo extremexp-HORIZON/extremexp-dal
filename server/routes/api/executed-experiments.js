@@ -18,11 +18,9 @@ const EXECUTED_EXPERIMENTS_SCHEMA = {
     end: 'string',
     intent: 'string',
     metadata: 'object',
-    // for status: NEW, RUNNING, PAUSED, STOPPED, COMPLETED
     status: 'string',
     comment: 'string',
-    model: 'string',
-    workflowIds: ['string']
+    model: 'string'
 };
 
 router.putAsync('/executed-experiments', async (req, res) => {
@@ -36,8 +34,8 @@ router.putAsync('/executed-experiments', async (req, res) => {
 
         // add new to the newly created executed experiment
         body.status = "new";
-        if (!body.hasOwnProperty("workflowIds")){
-            body.workflowIds = [];
+        if (!body.hasOwnProperty("workflow_ids")){
+            body.workflow_ids = [];
         }
 
         const response = await elasticsearch.index({
@@ -160,7 +158,6 @@ router.getAsync('/executed-experiments/:experimentId', async (req, res) => {
         if (experiment._source.model && process.env.DMS_PATH) {
             const shellout = execSync(`bash ${process.env.DMS_PATH}/run.sh \'${experiment._source.model}\'`)
             try{
-                console.log(shellout);
                 modelJSON = JSON.parse(shellout.toString("utf8"),null, 2);
 
             }
@@ -228,7 +225,7 @@ router.postAsync('/executed-experiments-sort-workflows/:experimentId', async (re
         }
 
         const precedence = req.body.precedence;
-        let workflowIdList = experimentResponse._source.workflowIds;
+        let workflowIdList = experimentResponse._source.workflow_ids;
         Object.keys(precedence).forEach((key) => {
             workflowIdList = moveElementBeforeAnother(workflowIdList, key, precedence[key]);
         });
@@ -238,7 +235,7 @@ router.postAsync('/executed-experiments-sort-workflows/:experimentId', async (re
             id: experimentId,
             body: { doc:
                     {
-                        "workflowIds": workflowIdList,
+                        "workflow_ids": workflowIdList,
                     }
             }
         });
@@ -302,9 +299,12 @@ router.postAsync('/executed-experiments-query', async (req, res) => {
             body: { query }
         });
 
-        const executedExperiments = await Promise.all(body.hits.hits.map(async hit => {
-            return hit;
-        }));
+        const executedExperiments = await Promise.all(body.hits.hits.map(async hit => ({
+            [hit._id]: {
+                id: hit._id,
+                ...hit._source
+            }
+        })));
 
         res.status(200).json(executedExperiments);
     } catch (error) {

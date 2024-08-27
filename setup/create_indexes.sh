@@ -50,7 +50,7 @@ executed_experiments_mapping='
       },
       "model": { "type": "text" },
       "comment": { "type": "text" },
-      "workflowIds": {
+      "workflow_ids": {
         "type": "keyword"
       }
     }
@@ -67,13 +67,11 @@ executed_workflows_mappings='
     "mappings": {
         "properties": {
             "id": { "type": "keyword" },
-            "experimentId" : { "type": "text"},
+            "experimentId" : { "type": "keyword"},
             "name": { "type": "text" },
             "status": { "type": "text" },
-            "deployedWorkflow": { "type": "text" },
             "start": { "type": "date" },
             "end": { "type": "date" },
-            "order": {"type": "integer" },
             "metadata": {
                 "type": "nested",
                 "properties": {
@@ -82,110 +80,11 @@ executed_workflows_mappings='
                 }
             },
             "comment": { "type": "text" },
-            "parameters": {
-                "type": "nested",
-                "properties": {
-                    "name": { "type": "text" },
-                    "type": { "type": "keyword" },
-                    "value": { "type": "text" },
-                    "usedByExecutedTasks": { "type": "keyword" }
-                }
-            },
-            "input_datasets": {
-                "type": "nested",
-                "properties": {
-                    "name": { "type": "text" },
-                    "uri": { "type": "text" },
-                    "usedByTasks": { "type": "keyword" },
-                    "date": { "type": "date" },
-                    "checksum": { "type": "text" }
-                }
-            },
-            "metrics": {
-                "type": "nested",
-                "properties": {
-                    "producedByTask": { "type": "keyword" },
-                    "name": { "type": "text" },
-                    "type": { "type": "keyword" },
-                    "value": { "type": "text" },
-                    "date": { "type": "date" },
-                    "metadata": {
-                      "type": "nested",
-                      "properties": {
-                          "key": { "type": "keyword" },
-                          "value": { "type": "text" }
-                      }
-                    }
-                }
-            },
-            "output_datasets": {
-                "type": "nested",
-                "properties": {
-                    "type": { "type": "keyword" },
-                    "value": { "type": "text" },
-                    "producedByTask": { "type": "keyword" },
-                    "title": { "type": "text" },
-                    "date": { "type": "date" },
-                    "checksum": { "type": "text" },
-                    "description": { "type": "text" }
-                }
-            },
-            "executedTasks": {
-                "type": "nested",
-                "properties": {
-                    "id": { "type": "keyword" },
-                    "name": { "type": "text" },
-                    "start": { "type": "date" },
-                    "end": { "type": "date" },
-                    "metadata": {
-                        "type": "nested",
-                        "properties": {
-                            "key": { "type": "keyword" },
-                            "value": { "type": "text" }
-                        }
-                    },
-                    "comment": { "type": "text" },
-                    "executedWorkflow": { "type": "keyword" },
-                    "source_code": { "type": "text" },
-                    "parameters": {
-                        "type": "nested",
-                        "properties": {
-                            "name": { "type": "text" },
-                            "type": { "type": "keyword" },
-                            "value": { "type": "text" }
-                        }
-                    },
-                    "input_datasets": {
-                        "type": "nested",
-                        "properties": {
-                            "title": { "type": "text" },
-                            "uri": { "type": "text" },
-                            "date": { "type": "date" },
-                            "checksum": { "type": "text" }
-                        }
-                    },
-                    "metrics": {
-                        "type": "nested",
-                        "properties": {
-                            "name": { "type": "text" },
-                            "type": { "type": "keyword" },
-                            "value": { "type": "text" },
-                            "date": { "type": "date" }
-                        }
-                    },
-                    "output_datasets": {
-                        "type": "nested",
-                        "properties": {
-                            "type": { "type": "keyword" },
-                            "value": { "type": "text" },
-                            "title": { "type": "text" },
-                            "date": { "type": "date" },
-                            "checksum": { "type": "text" },
-                            "description": { "type": "text" }
-                        }
-                    }
-                }
-            }
+            "parameter_ids": { "type": "keyword"  },
+            "input_datasets_ids": { "type": "keyword" }
+            "metric_ids": { "type": "keyword" },
+            "output_ids": { "type": "keyword" },
+            "executed_tasks_id": {"type": "keyword" }
         }
     }
 }'
@@ -198,6 +97,7 @@ executed_tasks_mappings='
     },
     "mappings": {
         "properties": {
+            "experimentId" : { "type": "keyword"},
             "id": { "type": "keyword" },
             "name": { "type": "text" },
             "start": { "type": "date" },
@@ -210,45 +110,12 @@ executed_tasks_mappings='
                 }
             },
             "comment": { "type": "text" },
-            "executedWorkflow": { "type": "keyword" },
+            "executed_workflow": { "type": "keyword" },
             "source_code": { "type": "text" },
-            "parameters": {
-                "type": "nested",
-                "properties": {
-                    "name": { "type": "text" },
-                    "type": { "type": "keyword" },
-                    "value": { "type": "text" }
-                }
-            },
-            "input_datasets": {
-                "type": "nested",
-                "properties": {
-                    "title": { "type": "text" },
-                    "uri": { "type": "text" },
-                    "date": { "type": "date" },
-                    "checksum": { "type": "text" }
-                }
-            },
-            "metrics": {
-                "type": "nested",
-                "properties": {
-                    "name": { "type": "text" },
-                    "type": { "type": "keyword" },
-                    "value": { "type": "text" },
-                    "date": { "type": "date" }
-                }
-            },
-            "output_datasets": {
-                "type": "nested",
-                "properties": {
-                    "type": { "type": "keyword" },
-                    "value": { "type": "text" },
-                    "title": { "type": "text" },
-                    "date": { "type": "date" },
-                    "checksum": { "type": "text" },
-                    "description": { "type": "text" }
-                }
-            }
+            "parameter_ids":  { "type": "keyword" },
+            "input_dataset_ids": { "type": "keyword" },
+            "metric_ids": { "type": "keyword" },
+            "output_dataset_ids": { "type": "keyword" }
         }
     }
 }'
@@ -261,13 +128,20 @@ metrics_mappings='
     },
     "mappings": {
         "properties": {
-            "executedWorkflowId": { "type": "keyword" },
-            "executedTaskId": { "type": "keyword" },
+            "experimentId" : { "type": "keyword"},
+            "parent_type": { "type": "text" },
+            "parent_id": { "type": "keyword" },
             "type": { "type": "text"},
-            "semanticType": { "type" : "text" },
+            "semantic_type": { "type" : "text" },
             "name": { "type": "text" },
             "value": { "type": "text" },
-            "date": { "type": "date" }
+            "date": { "type": "date" },
+            "records":{
+              "type": "nested",
+              "properties": {
+                "value" { "type": "text" }
+              }
+            }
         }
     }
 }'
@@ -280,10 +154,13 @@ parameters_mappings='
     },
     "mappings": {
         "properties": {
+            "experimentId" : { "type": "keyword"},
             "name": { "type": "text" },
             "type": { "type": "keyword" },
             "value": { "type": "text" },
-            "usedByExecutedTasks": { "type": "keyword" }
+            "usedByExecutedTasks": { "type": "text"},
+            "parent_type": { "type": "text" },
+            "parent_id": { "type": "keyword" },
         }
     }
 }'
@@ -296,8 +173,9 @@ input_datasets_mappings='
     },
     "mappings": {
         "properties": {
-            "executedWorkflowId": { "type": "keyword" },
-            "executedTaskId": { "type": "keyword" },
+            "experimentId" : { "type": "keyword"},
+            "parent_type": { "type": "text" },
+            "parent_id": { "type": "keyword" },
             "title": { "type": "text" },
             "uri": { "type": "text" },
             "date": { "type": "date" },
@@ -314,8 +192,9 @@ output_datasets_mappings='
     },
     "mappings": {
         "properties": {
-            "executedWorkflowId": { "type": "keyword" },
-            "executedTaskId": { "type": "keyword" },
+            "experimentId" : { "type": "keyword"},
+            "parent_type": { "type": "text" },
+            "parent_id": { "type": "keyword" },
             "title": { "type": "text" },
             "uri": { "type": "text" },
             "date": { "type": "date" },

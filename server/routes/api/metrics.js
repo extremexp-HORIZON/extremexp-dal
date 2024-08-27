@@ -28,250 +28,244 @@ const METRIC_DEFINITION_SCHEMA = {
     schema: 'object',
     name: 'string'
 };
-
+const METRIC_SCHEMA = {
+    name: 'string',
+    semanticType: 'string',
+    type: 'string',
+    value: 'string',
+    producedByTask: 'string',
+    date: 'string',
+    parent_type: 'string',
+    parent_id:'string'
+}
 router.putAsync('/metrics', async (req, res) => {
-    const batchItem = req.body;
+    try {
+        const body = req.body;
 
-    if (Array.isArray(batchItem)) {
-        return res.status(400).json("Only a single metric is allowed");
-    }
-
-    const validationResult = validateSchema(batchItem, METRIC_DEFINITION_SCHEMA);
-    if (validationResult) {
-        return res.status(400).json({ error: `Validation error: ${validationResult}` });
-    }
-
-    if (batchItem.name === undefined) {
-        return res.status(400).json("Please specify metricId");
-    }
-
-    const sigSetCid = batchItem.name;
-    console.log("sigSetCid " + sigSetCid);
-
-    if (batchItem.data !== undefined) {
-        return res.status(400).json("This endpoint does not support data addition");
-    }
-
-    const schema = {};
-
-    for (const cid in batchItem.schema) {
-        const type = batchItem.schema[cid];
-
-        if (!(type in typeMapping)) {
-            return res.status(400).json("Unknown type " + type);
+        const validationError = validateSchema(body, METRIC_SCHEMA);
+        if (validationError) {
+            return res.status(400).json({error: validationError});
         }
 
-        schema[cid] = {
-            type: typeMapping[type],
-            name: cid,
-            settings: {},
-            indexed: true,
-            weight_edit: 0
-        };
-    }
-
-    try {
-        if (await signalSets.getByCid(req.context, batchItem.name) !== undefined) {
-            return res.status(400).json({error: 'Metric already exists'});
+        if (!body.hasOwnProperty("parent_type") || !body.hasOwnProperty("parent_id")) {
+            return res.status(404).json({error: "Please add parent_type and parent_id; for example executed_workflow and its id which the metric belongs to."});
         }
-    } catch(error){
+        const parentResponse = await elasticsearch.get({
+            index: `${body.parent_type}s`,
+            id: body.parent_id
+        });
+        if (!parentResponse.found) {
+            return res.status(404).json({error: `${body.parent_type} with id ${body.parent_id}  not found`});
+        }
 
-    }
+        body.experimentId = parentResponse._source.experimentId;
+        const otherMetrics = (parentResponse._source.metrics) ? parentResponse._source.metrics : [];
+        const otherMetricIds = (parentResponse._source.metric_ids) ? parentResponse._source.metric_ids : [];
 
-    try {
-        await signalSets.ensure(
-            contextHelpers.getAdminContext(),
-            {
-                cid: sigSetCid,
-                //FIXME, MA: what is the purpose of the below line?
-                name: batchItem.hasOwnProperty('name') ? batchItem.name : batchItem.name,
-                description: batchItem.hasOwnProperty('description') ? batchItem.description : '',
-                namespace: 1,
-            },
-            schema
-        );
+        const response = await elasticsearch.index({
+            index: 'metrics',
+            body
+        });
+        if (response.result === 'created') {
+            otherMetrics.push({[response._id]: body});
+            otherMetricIds.push(response._id);
+            await elasticsearch.update({
+                index: `${body.parent_type}s`,
+                id: body.parent_id,
+                body: {
+                    doc: {
+                        metrics: otherMetrics,
+                        metric_ids: otherMetricIds
+                    }
+                }
+            });
+            return res.status(201).json({metric_id: response._id});
+        } else {
+            console.error('Error adding metric:', response);
+            return res.status(400).json({error: 'Failed to add executed metric'});
+        }
+
     } catch (error) {
-        console.error('Error creating metric:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error('Error adding metric:', error);
+        res.status(500).json({error: 'Internal server error'});
     }
-
-    return res.json("Metric created successfully!");
 });
+// Function to calculate the sum value
+function calculateSum(data) {
+    return data.reduce((acc, item) => acc + item.value, 0);
+}
+
+// Function to calculate the minimum value
+function calculateMin(data) {
+    return Math.min(...data.map(item => item.value));
+}
+
+// Function to calculate the maximum value
+function calculateMax(data) {
+    return Math.max(...data.map(item => item.value));
+}
+
+// Function to calculate the average value
+function calculateAverage(data) {
+    const sum = calculateSum(data);
+    const count = data.length;
+    return count > 0 ? sum / count : 0;
+}
+
+// Function to calculate the count of values
+function calculateCount(data) {
+    return data.length;
+}
+
+
+// Function to calculate the median value
+function calculateMedian(data) {
+    const values = data.map(item => item.value).sort((a, b) => a - b);
+    const length = values.length;
+    if (length === 0) return 0;
+    const middle = Math.floor(length / 2);
+    if (length % 2 === 0) {
+        return (values[middle - 1] + values[middle]) / 2;
+    } else {
+        return values[middle];
+    }
+}
 
 router.getAsync('/metrics/:metricId', async (req, res) => {
-    try {
-        const { metricId } = req.params;
+    const { metricId } = req.params;
 
-        const signalSet = await signalSets.getByCid(req.context, metricId,true,true);
-        if (!signalSet) {
-            return res.status(404).json({ error: 'Metric not found' });
+    var metricResponse;
+    try {
+        metricResponse = await elasticsearch.get({
+            index: 'metrics',
+            id: metricId
+        });
+        let aggregation = {};
+        if (metricResponse._source.hasOwnProperty("records")){
+
+            try{
+                aggregation = {
+                    "count": calculateCount(metricResponse._source.records),
+                    "average": calculateAverage(metricResponse._source.records),
+                    "sum": calculateSum(metricResponse._source.records),
+                    "min": calculateMin(metricResponse._source.records),
+                    "max": calculateMax(metricResponse._source.records),
+                    "median": calculateMedian(metricResponse._source.records),
+                }
+            }
+            catch (error){
+                aggregation = {};
+            }
+        }
+        res.status(200).json({
+            ...metricResponse._source,
+            aggregation: aggregation
+        });
+    } catch(error){
+        return res.status(404).json({ error: 'Metric not found' });
+    }
+
+});
+
+router.postAsync('/metrics/:metricId', async (req, res) => {
+    const {metricId} = req.params;
+    const body = req.body;
+
+    const validationError = validateSchema(body, METRIC_SCHEMA);
+    if (validationError) {
+        return res.status(400).json({error: validationError});
+    }
+
+    // remove the relation attributes
+    if (body.hasOwnProperty("parent_type")) {
+        delete body.parent_type;
+    }
+    if (body.hasOwnProperty("parent_id")) {
+        delete body.parent_id;
+    }
+    if (body.hasOwnProperty("experiment_id")) {
+        delete body.experiment_id;
+    }
+
+    try {
+        const existingMetric = await elasticsearch.get({
+            index: 'metrics',
+            id: metricId
+        });
+        if (!existingMetric.found) {
+            return res.status(404).json({error: 'Metric not found'});
         }
 
-        const result = {
-            name: signalSet.name,
-            schema: Object.keys(signalSet.signalByCidMap).reduce((acc, cid) => {
-                acc[cid] = signalSet.signalByCidMap[cid].type;
-                return acc;
-            }, {})
-        };
+        const response = await elasticsearch.update({
+            index: 'metrics',
+            id: metricId,
+            body: {doc: body}
+        });
 
-        return res.status(200).json(result);
+        if (response.result === 'noop') {
+            return res.status(200).json({message: 'No updates needed', document: response.body});
+        }
+        if (response.result === 'updated') {
+            return res.status(200).json({message: 'Metric updated successfully', document: response.body});
+        } else {
+            console.error('Error updating metric', response.body);
+            return res.status(400).json({error: 'Failed to update metric'});
+        }
     } catch (error) {
-        console.error('Error retrieving metric:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error('Error updating metric:', error);
+        res.status(500).json({error: 'Internal server error'});
     }
 });
 
 const METRIC_DATA_SCHEMA = {
-    schema: 'object',
-    data: 'object',
+    records: 'object',
 };
 
-router.putAsync('/metrics/:metricId', async (req, res) => {
-    const idField = 'id';
-    const metricId = req.params.metricId;
+router.putAsync('/metrics-data/:metricId', async (req, res) => {
+    const {metricId} = req.params;
+    const body = req.body;
 
-    let batch = req.body;
-
-    if (!Array.isArray(batch)) {
-        batch = [batch];
+    const validationError = validateSchema(body, METRIC_DATA_SCHEMA);
+    if (validationError) {
+        return res.status(400).json({error: validationError});
     }
-
-    for (const batchItem of batch) {
-        const validationResult = validateSchema(batchItem, METRIC_DATA_SCHEMA);
-        if (validationResult) {
-            return res.status(400).json({ error: `Validation error: ${validationResult}` });
-        }
-    }
-
-    try{
-        const signalSetWithSignalMap = await signalSets.getByCid(req.context, metricId,true,true);
-        console.log(signalSetWithSignalMap);
-        if (!signalSetWithSignalMap) {
-            console.error('Metric not found for metricId:', metricId);
-            return res.status(404).json({ error: 'Metric not found' });
+    try {
+        const existingMetric = await elasticsearch.get({
+            index: 'metrics',
+            id: metricId
+        });
+        if (!existingMetric.found) {
+            return res.status(404).json({error: 'Metric not found'});
         }
 
-        if (!signalSetWithSignalMap.signalByCidMap) {
-            console.error('signalByCidMap is undefined for metricId:', metricId);
-            return res.status(500).json({ error: 'signalByCidMap is undefined' });
+        const data = (existingMetric._source.hasOwnProperty("records"))?  existingMetric._source.records : [];
+        for (let dataObject of body.records){
+            data.push(dataObject);
         }
 
-        for (const batchItem of batch) {
-            const records = [];
+        const response = await elasticsearch.update({
+            index: 'metrics',
+            id: metricId,
+            body: {doc : {records: data}}
+        });
 
-            if (batchItem.schema !== undefined) {
-                return res.status(400).json("This endpoint does not support schema definition");
-            }
-
-            if (batchItem.data === undefined) {
-                return res.status(400).json("Please provide data");
-            }
-
-            for (const dataEntry of batchItem.data) {
-                const record = {
-                    id: dataEntry.id,
-                    signals: {}
-                };
-
-                const missingAttributes = [];
-                for (const fieldId in dataEntry) {
-                    if (fieldId !== idField) {
-                        if (!(fieldId in signalSetWithSignalMap.signalByCidMap)) {
-                            missingAttributes.push(fieldId);
-                        }
-                    }
-                }
-
-                if (missingAttributes.length > 0) {
-                    return res.status(400).json("Attributes " + missingAttributes + " not specified in schema!");
-                }
-
-                for (const fieldId in dataEntry) {
-                    if (fieldId !== idField) {
-                        let value = dataEntry[fieldId];
-                        if (signalSetWithSignalMap.signalByCidMap[fieldId].type === SignalType.DATE_TIME) {
-                            value = moment(value);
-                        }
-
-                        record.signals[fieldId] = value;
-                    }
-                }
-
-                records.push(record);
-            }
-
-            try {
-                await signalSets.insertRecords(req.context, signalSetWithSignalMap, records);
-            } catch (error) {
-                console.error('Error adding records:', error);
-
-                if (error.message.includes('ER_DUP_ENTRY')) {
-                    return res.status(400).json({ error: 'Duplicate entry detected', details: error.message });
-                }
-
-                return res.status(500).json({ error: 'Internal server error' });
-            }
+        if (response.result === 'noop') {
+            return res.status(200).json({message: 'No updates needed', document: response.body});
         }
-
-        return res.json("Records added successfully!");
+        if (response.result === 'updated') {
+            return res.status(200).json({message: 'Metric updated successfully', document: response.body});
+        } else {
+            console.error('Error updating metric', response.body);
+            return res.status(400).json({error: 'Failed to update metric'});
+        }
     } catch (error) {
-        console.error('Error fetching metric:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error('Error updating metric:', error);
+        res.status(500).json({error: 'Internal server error'});
     }
 });
 
-router.postAsync('/metrics-query/:metricId', async (req, res) => {
-    try {
-        const { metricId } = req.params;
-        const { startDate, count, timeAttribute, attribute } = req.body;
-        const numSamples = count ? parseInt(count) : 100;
+router.postAsync('/metrics-data/:metricId', async (req, res) => {
 
-        if (!attribute || (Array.isArray(attribute) && attribute.length === 0)) {
-            return res.status(400).json({ error: 'Please provide at least one attribute' });
-        }
-
-        const signalsArray = Array.isArray(attribute) ? attribute : [attribute];
-
-        const signalSet = await signalSets.getByCid(req.context, metricId);
-        if (!signalSet) {
-            return res.status(404).json({ error: 'Metric not found' });
-        }
-
-        const query = {
-            params: {
-                withId: true
-            },
-            sigSetCid: metricId,
-            filter: {
-                type: "and",
-                children: []
-            },
-            docs: {
-                signals: signalsArray,
-                limit: numSamples,
-                sort: []
-            }
-        };
-
-        if (startDate && timeAttribute) {
-            query.filter.children.push({
-                type: "range",
-                sigCid: timeAttribute,
-                gte: startDate
-            });
-        }
-
-        const records = await signalSets.query(req.context, [query]);
-        return res.status(200).json(records[0].docs);
-    } catch (error) {
-        if (error.message.includes('Permission denied')) {
-            return res.status(400).json({ error: 'Permission denied', details: error.message });
-        }
-
-        console.error('Error retrieving metrics:', error);
-        return res.status(500).json({ error: 'Internal server error' });
-    }
 });
 
 router.postAsync('/metrics-query', async (req, res) => {
@@ -353,90 +347,13 @@ router.postAsync('/metrics-query', async (req, res) => {
 });
 
 
-/*router.postAsync('/metrics-query', async (req, res) => {
-    try {
-        const { experimentId, workflowId, startDate, count, timeAttribute, attribute } = req.body;
-        const numSamples = count ? parseInt(count) : 100;
-
-        const mustConditions = [];
-
-        if (experimentId) {
-            mustConditions.push({ match: { 'metadata.experimentId': experimentId } });
-        }
-
-        if (workflowId) {
-            mustConditions.push({ match: { 'metadata.workflowId': workflowId } });
-        }
-
-        if (mustConditions.length === 0) {
-            return res.status(400).json({ error: 'Please provide at least experimentId, workflowId, or metricId' });
-        }
-
-        if (metricId) {
-            if (!attribute || (Array.isArray(attribute) && attribute.length === 0)) {
-                return res.status(400).json({ error: 'Please provide at least one attribute' });
-            }
-
-            const signalsArray = Array.isArray(attribute) ? attribute : [attribute];
-
-            const signalSet = await signalSets.getByCid(req.context, metricId);
-            if (!signalSet) {
-                return res.status(404).json({ error: 'Metric not found' });
-            }
-
-            const query = {
-                params: {
-                    withId: true
-                },
-                sigSetCid: metricId,
-                filter: {
-                    type: "and",
-                    children: mustConditions
-                },
-                docs: {
-                    signals: signalsArray,
-                    limit: numSamples,
-                    sort: []
-                }
-            };
-
-            if (startDate && timeAttribute) {
-                query.filter.children.push({
-                    type: "range",
-                    sigCid: timeAttribute,
-                    gte: startDate
-                });
-            }
-
-            const records = await signalSets.query(req.context, [query]);
-            return res.status(200).json(records[0].docs);
-        } else {
-            // Perform general metadata query
-            const client = await elasticsearch.getClientAsync();
-
-            const searchParams = {
-                index: 'metrics',
-                body: {
-                    query: {
-                        bool: {
-                            must: mustConditions
-                        }
-                    }
-                }
-            };
-
-            const { body: { hits } } = await client.search(searchParams);
-            const results = hits.hits.map(hit => hit._source);
-            return res.status(200).json(results);
-        }
-    } catch (error) {
-        if (error.message.includes('Permission denied')) {
-            return res.status(400).json({ error: 'Permission denied', details: error.message });
-        }
-
-        console.error('Error retrieving metrics:', error);
-        return res.status(500).json({ error: 'Internal server error' });
-    }
-});*/
+// Aggregation
+// const sum = calculateSum(metric.data);
+// const min = calculateMin(metric.data);
+// const max = calculateMax(metric.data);
+// const average = calculateAverage(metric.data);
+// const count = calculateCount(metric.data);
+// const range = calculateRange(metric.data);
+// const median = calculateMedian(metric.data);
 
 module.exports = router;
