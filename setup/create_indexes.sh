@@ -81,7 +81,7 @@ workflows_mappings='
             },
             "comment": { "type": "text" },
             "parameter_ids": { "type": "keyword"  },
-            "input_datasets_ids": { "type": "keyword" }
+            "input_datasets_ids": { "type": "keyword" },
             "metric_ids": { "type": "keyword" },
             "output_ids": { "type": "keyword" },
             "tasks_id": {"type": "keyword" }

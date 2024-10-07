@@ -298,10 +298,20 @@ router.getAsync('/workflows/:workflowId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 })
+const EXPERIMENTS_QUERY_SCHEMA = {
+    experimentId: 'string',
+    startTime: 'string',
+    endTime: 'string',
+    metadata: 'object',
+};
+
 
 router.postAsync('/workflows-query', async (req, res) => {
     try {
-        const { id, status, experimentId, startTime, endTime, startId, endId, metadata } = req.body;
+        const validationResult = validateSchema(req.body, EXPERIMENTS_QUERY_SCHEMA);
+        if (validationResult) {
+            return res.status(400).json({ error: `Validation error: ${validationResult}` });
+        }
 
         const query = {
             bool: {
@@ -310,30 +320,19 @@ router.postAsync('/workflows-query', async (req, res) => {
             }
         };
 
-        if (id) {
-            query.bool.must.push({ match: { id } });
+        if (req.body.experimentId) {
+            query.bool.must.push({ term: { experimentId:req.body.experimentId } });
         }
 
-        if(experimentId){
-            query.bool.must.push({match: {experimentId}});
-        }
-
-        if (startTime || endTime) {
+        if (req.body.startTime || req.body.endTime) {
             const rangeQuery = {};
-            if (startTime) rangeQuery.gte = startTime;
-            if (endTime) rangeQuery.lte = endTime;
+            if (req.body.startTime) rangeQuery.gte = req.body.startTime;
+            if (req.body.endTime) rangeQuery.lte = req.body.endTime;
             query.bool.filter.push({ range: { start: rangeQuery } });
         }
 
-        if (startId || endId) {
-            const rangeQuery = {};
-            if (startId) rangeQuery.gte = startId;
-            if (endId) rangeQuery.lte = endId;
-            query.bool.filter.push({ range: { id: rangeQuery } });
-        }
-
-        if (metadata) {
-            for (const [key, value] of Object.entries(metadata)) {
+        if (req.body.metadata) {
+            for (const [key, value] of Object.entries(req.body.metadata)) {
                 query.bool.filter.push({
                     nested: {
                         path: 'metadata',
@@ -348,23 +347,16 @@ router.postAsync('/workflows-query', async (req, res) => {
                 });
             }
         }
-        if (status) {
-            query.bool.must.push({ match: { status } });
-        }
 
         const body = await elasticsearch.search({
             index: 'workflows',
             body: { query }
         });
 
-        const workflows = await Promise.all(
-            body.hits.hits.map(hit => ({
-                [hit._id]: {
-                    id: hit._id,
-                    ...hit._source
-                }
-
-            })));
+        const workflows = body.hits.hits.map(hit => ({
+            id: hit._id,
+            ...hit._source
+        }));
 
         res.status(200).json(workflows);
 
@@ -373,5 +365,6 @@ router.postAsync('/workflows-query', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
 
 module.exports = router;
