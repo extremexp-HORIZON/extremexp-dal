@@ -11,7 +11,7 @@ const log = require('../../../ivis-core/server/lib/log');
 const { SignalType } = require('../../../ivis-core/shared/signals');
 const contextHelpers = require('../../../ivis-core/server/lib/context-helpers');
 const namespaces = require('../../../ivis-core/server/models/namespaces');
-const {validateSchema} = require("./util");
+const {validateSchema, aggregatieMetric} = require("./util");
 
 const typeMapping = {
     datetime: SignalType.DATE_TIME,
@@ -90,46 +90,7 @@ router.putAsync('/metrics', async (req, res) => {
         res.status(500).json({error: 'Internal server error'});
     }
 });
-// Function to calculate the sum value
-function calculateSum(data) {
-    return data.reduce((acc, item) => acc + item.value, 0);
-}
 
-// Function to calculate the minimum value
-function calculateMin(data) {
-    return Math.min(...data.map(item => item.value));
-}
-
-// Function to calculate the maximum value
-function calculateMax(data) {
-    return Math.max(...data.map(item => item.value));
-}
-
-// Function to calculate the average value
-function calculateAverage(data) {
-    const sum = calculateSum(data);
-    const count = data.length;
-    return count > 0 ? sum / count : 0;
-}
-
-// Function to calculate the count of values
-function calculateCount(data) {
-    return data.length;
-}
-
-
-// Function to calculate the median value
-function calculateMedian(data) {
-    const values = data.map(item => item.value).sort((a, b) => a - b);
-    const length = values.length;
-    if (length === 0) return 0;
-    const middle = Math.floor(length / 2);
-    if (length % 2 === 0) {
-        return (values[middle - 1] + values[middle]) / 2;
-    } else {
-        return values[middle];
-    }
-}
 
 router.getAsync('/metrics/:metricId', async (req, res) => {
     const { metricId } = req.params;
@@ -140,23 +101,7 @@ router.getAsync('/metrics/:metricId', async (req, res) => {
             index: 'metrics',
             id: metricId
         });
-        let aggregation = {};
-        if (metricResponse._source.hasOwnProperty("records")){
-
-            try{
-                aggregation = {
-                    "count": calculateCount(metricResponse._source.records),
-                    "average": calculateAverage(metricResponse._source.records),
-                    "sum": calculateSum(metricResponse._source.records),
-                    "min": calculateMin(metricResponse._source.records),
-                    "max": calculateMax(metricResponse._source.records),
-                    "median": calculateMedian(metricResponse._source.records),
-                }
-            }
-            catch (error){
-                aggregation = {};
-            }
-        }
+        const aggregation = aggregatieMetric(metricResponse);
         res.status(200).json({
             ...metricResponse._source,
             aggregation: aggregation

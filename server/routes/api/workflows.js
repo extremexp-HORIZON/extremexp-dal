@@ -4,6 +4,7 @@ const elasticsearch = require('../../../ivis-core/server/lib/elasticsearch');
 const router = require('../../../ivis-core/server/lib/router-async').create();
 
 const { addMetadataToQuery, validateSchema } = require('./util.js');
+const {aggregatieMetric} = require("./util");
 
 const REQUIRED_FIELDS = ['name', 'start', 'end'];
 function validateRequiredFields(body) {
@@ -280,9 +281,12 @@ router.getAsync('/workflows/:workflowId', async (req, res) => {
                         index: 'metrics',
                         id: metric
                     });
+                    const aggregation = aggregatieMetric(metricResponse);
                     if (metricResponse.found){
                         metricUpdates.push({
-                            [metric]: metricResponse._source
+                            [metric]: {
+                                ...metricResponse._source, aggregation:aggregation
+                            }
                         });
                     }
                 }
