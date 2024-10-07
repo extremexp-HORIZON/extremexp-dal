@@ -12,7 +12,7 @@ function validateRequiredFields(body) {
     return REQUIRED_FIELDS.every(field => body.hasOwnProperty(field));
 }
 
-const EXECUTED_EXPERIMENTS_SCHEMA = {
+const EXPERIMENTS_SCHEMA = {
     name: 'string',
     start: 'string',
     end: 'string',
@@ -23,23 +23,23 @@ const EXECUTED_EXPERIMENTS_SCHEMA = {
     model: 'string'
 };
 
-router.putAsync('/executed-experiments', async (req, res) => {
+router.putAsync('/experiments', async (req, res) => {
     try {
         const body = req.body;
 
-        const validationResult = validateSchema(body, EXECUTED_EXPERIMENTS_SCHEMA);
+        const validationResult = validateSchema(body, EXPERIMENTS_SCHEMA);
         if (validationResult) {
             return res.status(400).json({ error: `Validation error: ${validationResult}` });
         }
 
-        // add new to the newly created executed experiment
+        // add new to the newly created experiment
         body.status = "new";
         if (!body.hasOwnProperty("workflow_ids")){
             body.workflow_ids = [];
         }
 
         const response = await elasticsearch.index({
-            index: 'executed_experiments',
+            index: 'experiments',
             id: body.id,
             body,
         });
@@ -47,63 +47,63 @@ router.putAsync('/executed-experiments', async (req, res) => {
         if (response.result === 'created') {
             return res.status(201).json({ message: {experimentId: response._id} });
         } else {
-            console.error('Error adding executed experiment:', response);
-            return res.status(400).json({ error: 'Failed to add executed experiment' });
+            console.error('Error adding experiment:', response);
+            return res.status(400).json({ error: 'Failed to add experiment' });
         }
     } catch (error) {
-        console.error('Error adding executed experiment:', error);
+        console.error('Error adding experiment:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-router.postAsync('/executed-experiments/:experimentId', async (req, res) => {
+router.postAsync('/experiments/:experimentId', async (req, res) => {
     try {
         const { experimentId } = req.params;
         const body = req.body;
 
         try{
             const existingExperiment = await elasticsearch.get({
-                index: 'executed_experiments',
+                index: 'experiments',
                 id: experimentId
             });
             if (!existingExperiment) {
-                return res.status(404).json({ error: 'Executed experiment not found' });
+                return res.status(404).json({ error: 'experiment not found' });
             }
         }
         catch(error)
         {
-            return res.status(404).json({ error: "Executed experiment not found" });
+            return res.status(404).json({ error: "experiment not found" });
         }
 
-        const validationResult = validateSchema(body, EXECUTED_EXPERIMENTS_SCHEMA);
+        const validationResult = validateSchema(body, EXPERIMENTS_SCHEMA);
         if (validationResult) {
             return res.status(400).json({ error: `Validation error: ${validationResult}` });
         }
 
         const response = await elasticsearch.update({
-            index: 'executed_experiments',
+            index: 'experiments',
             id: experimentId,
             body: { doc: body }
         });
 
         if (response.result === 'updated') {
-            return res.status(200).json({ message: 'Executed experiment updated successfully', document: response.body });
+            return res.status(200).json({ message: 'Experiment updated successfully', document: response.body });
         } else {
-            console.error('Error updating executed experiment:', response.body);
-            return res.status(400).json({ error: 'Failed to update executed experiment' });
+            console.error('Error updating experiment:', response.body);
+            return res.status(400).json({ error: 'Failed to update experiment' });
         }
     } catch (error) {
-        console.error('Error updating executed experiment:', error);
+        console.error('Error updating experiment:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-router.getAsync('/executed-experiments', async (req, res) => {
+router.getAsync('/experiments', async (req, res) => {
     try {
         let experimentsResponse;
         try {
             experimentsResponse = await elasticsearch.search({
-                index: 'executed_experiments',
+                index: 'experiments',
                 size: 1000,
                 scroll: '1m', // Keep the search context alive for 1 minute
                 body: {
@@ -113,43 +113,43 @@ router.getAsync('/executed-experiments', async (req, res) => {
                 }
             });
         } catch (error) {
-            return res.status(404).json({ error: 'Executed experiments not found' });
+            return res.status(404).json({ error: 'Experiments not found' });
         }
 
         if (!experimentsResponse.hits || experimentsResponse.hits.total.value === 0) {
-            return res.status(404).json({ error: 'Executed experiments not found' });
+            return res.status(404).json({ error: 'Experiments not found' });
         }
 
-        const executed_experiments = experimentsResponse.hits.hits.map(hit => ({
+        const experiments = experimentsResponse.hits.hits.map(hit => ({
             [hit._id]: {
                 id: hit._id,
                 ...hit._source
             }
 
         }));
-        res.status(200).json({ executed_experiments });
+        res.status(200).json({ experiments });
     } catch (error) {
-        console.error('Error retrieving executed experiments:', error);
+        console.error('Error retrieving experiments:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 
-router.getAsync('/executed-experiments/:experimentId', async (req, res) => {
+router.getAsync('/experiments/:experimentId', async (req, res) => {
     try {
         const { experimentId } = req.params;
         let experimentResponse;
         try {
              experimentResponse = await elasticsearch.get({
-                index: 'executed_experiments',
+                index: 'experiments',
                 id: experimentId
             });
         } catch (error){
-            return res.status(404).json({ error: 'Executed experiment not found' });
+            return res.status(404).json({ error: 'experiment not found' });
         }
 
         if (!experimentResponse.found) {
-            return res.status(404).json({ error: 'Executed experiment not found' });
+            return res.status(404).json({ error: 'experiment not found' });
         }
 
 
@@ -172,7 +172,7 @@ router.getAsync('/executed-experiments/:experimentId', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error retrieving executed experiment:', error);
+        console.error('Error retrieving experiment:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -206,17 +206,17 @@ function moveElementBeforeAnother(array, a, b) {
 }
 
 
-router.postAsync('/executed-experiments-sort-workflows/:experimentId', async (req, res) => {
+router.postAsync('/experiments-sort-workflows/:experimentId', async (req, res) => {
     try {
         const { experimentId } = req.params;
         let experimentResponse;
         try {
             experimentResponse = await elasticsearch.get({
-                index: 'executed_experiments',
+                index: 'experiments',
                 id: experimentId
             });
         } catch (error){
-            return res.status(404).json({ error: 'Executed experiment not found' });
+            return res.status(404).json({ error: 'Experiment not found' });
         }
 
         const validationResult = validateSchema(req.body, EXPERIMENTS_WORKFLOW_SORT_SCHEMA);
@@ -231,7 +231,7 @@ router.postAsync('/executed-experiments-sort-workflows/:experimentId', async (re
         });
 
         const response = await elasticsearch.update({
-            index: 'executed_experiments',
+            index: 'experiments',
             id: experimentId,
             body: { doc:
                     {
@@ -249,7 +249,7 @@ router.postAsync('/executed-experiments-sort-workflows/:experimentId', async (re
 
 
     } catch (error) {
-        console.error('Error ordering workflows of executed experiments:', error);
+        console.error('Error ordering workflows of experiments:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -259,7 +259,7 @@ const EXPERIMENTS_QUERY_SCHEMA = {
     metadata: 'object',
 };
 
-router.postAsync('/executed-experiments-query', async (req, res) => {
+router.postAsync('/experiments-query', async (req, res) => {
     try {
         const validationResult = validateSchema(req.body, EXPERIMENTS_QUERY_SCHEMA);
         if (validationResult) {
@@ -295,20 +295,20 @@ router.postAsync('/executed-experiments-query', async (req, res) => {
         }
 
         const body = await elasticsearch.search({
-            index: 'executed_experiments',
+            index: 'experiments',
             body: { query }
         });
 
-        const executedExperiments = await Promise.all(body.hits.hits.map(async hit => ({
+        const experiments = await Promise.all(body.hits.hits.map(async hit => ({
             [hit._id]: {
                 id: hit._id,
                 ...hit._source
             }
         })));
 
-        res.status(200).json(executedExperiments);
+        res.status(200).json(experiments);
     } catch (error) {
-        console.error('Error retrieving executed experiments:', error);
+        console.error('Error retrieving experiments:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

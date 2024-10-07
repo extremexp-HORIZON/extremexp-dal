@@ -48,7 +48,7 @@ router.putAsync('/metrics', async (req, res) => {
         }
 
         if (!body.hasOwnProperty("parent_type") || !body.hasOwnProperty("parent_id")) {
-            return res.status(404).json({error: "Please add parent_type and parent_id; for example executed_workflow and its id which the metric belongs to."});
+            return res.status(404).json({error: "Please add parent_type and parent_id; for example and its id which the metric belongs to."});
         }
         const parentResponse = await elasticsearch.get({
             index: `${body.parent_type}s`,
@@ -82,7 +82,7 @@ router.putAsync('/metrics', async (req, res) => {
             return res.status(201).json({metric_id: response._id});
         } else {
             console.error('Error adding metric:', response);
-            return res.status(400).json({error: 'Failed to add executed metric'});
+            return res.status(400).json({error: 'Failed to add metric'});
         }
 
     } catch (error) {
@@ -306,7 +306,7 @@ router.postAsync('/metrics-query', async (req, res) => {
         };
 
         const response = await elasticsearch.search({
-            index: 'executed_workflows',
+            index: 'workflows',
             body: {
                 query
             }

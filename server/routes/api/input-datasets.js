@@ -6,21 +6,21 @@ const router = require('../../../ivis-core/server/lib/router-async').create();
 router.postAsync('/input-datasets', async (req, res) => {
     try {
         const {
-            executedWorkflowId,
-            executedTaskId,
+            workflowId,
+            taskId,
             title,
             uri,
             date,
             checksum
         } = req.body;
 
-        if (!executedWorkflowId || !executedTaskId || !title || !uri || !date || !checksum) {
+        if (!workflowId || !taskId || !title || !uri || !date || !checksum) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const document = {
-            executedWorkflowId,
-            executedTaskId,
+            workflowId,
+            taskId,
             title,
             uri,
             date,
@@ -46,7 +46,7 @@ router.postAsync('/input-datasets', async (req, res) => {
 
 router.getAsync('/input-datasets', async (req, res) => {
     try {
-        const { executedWorkflowId, executedTaskId } = req.query;
+        const { workflowId, taskId } = req.query;
 
         const query = {
             bool: {
@@ -54,12 +54,12 @@ router.getAsync('/input-datasets', async (req, res) => {
             }
         };
 
-        if (executedWorkflowId) {
-            query.bool.must.push({ match: { executedWorkflowId } });
+        if (workflowId) {
+            query.bool.must.push({ match: { workflowId } });
         }
 
-        if (executedTaskId) {
-            query.bool.must.push({ match: { executedTaskId } });
+        if (taskId) {
+            query.bool.must.push({ match: { taskId } });
         }
 
         const body = await elasticsearch.search({
@@ -80,21 +80,21 @@ router.putAsync('/input-datasets/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const {
-            executedWorkflowId,
-            executedTaskId,
+            workflowId,
+            taskId,
             title,
             uri,
             date,
             checksum
         } = req.body;
 
-        if (!executedWorkflowId || !executedTaskId || !title || !uri || !date || !checksum) {
+        if (!workflowId || !taskId || !title || !uri || !date || !checksum) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const document = {
-            executedWorkflowId,
-            executedTaskId,
+            workflowId,
+            taskId,
             title,
             uri,
             date,

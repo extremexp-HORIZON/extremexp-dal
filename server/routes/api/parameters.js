@@ -5,15 +5,15 @@ const router = require('../../../ivis-core/server/lib/router-async').create();
 
 router.postAsync('/parameters', async (req, res) => {
     try {
-        const { executedWorkflowId, executedTaskId, name, value, date } = req.body;
+        const { workflowId, taskId, name, value, date } = req.body;
 
-        if (!executedWorkflowId || !executedTaskId || !name || !value || !date) {
+        if (!workflowId || !taskId || !name || !value || !date) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const document = {
-            executedWorkflowId,
-            executedTaskId,
+            workflowId,
+            taskId,
             name,
             value,
             date
@@ -27,7 +27,7 @@ router.postAsync('/parameters', async (req, res) => {
         if (response.result === 'created') {
             res.status(201).json({ message: 'Parameter added successfully', document });
         } else {
-            console.error('Error adding executed task:', response.body);
+            console.error('Error adding task:', response.body);
             return res.status(400).json({ error: 'Failed to add parameter' });
         }
     } catch (error) {
@@ -38,7 +38,7 @@ router.postAsync('/parameters', async (req, res) => {
 
 router.getAsync('/parameters', async (req, res) => {
     try {
-        const { executedWorkflowId, executedTaskId, name } = req.query;
+        const { workflowId, taskId, name } = req.query;
 
         const query = {
             bool: {
@@ -46,12 +46,12 @@ router.getAsync('/parameters', async (req, res) => {
             }
         };
 
-        if (executedWorkflowId) {
-            query.bool.must.push({ match: { executedWorkflowId } });
+        if (workflowId) {
+            query.bool.must.push({ match: { workflowId } });
         }
 
-        if (executedTaskId) {
-            query.bool.must.push({ match: { executedTaskId } });
+        if (taskId) {
+            query.bool.must.push({ match: { taskId } });
         }
 
         if (name) {
@@ -76,15 +76,15 @@ router.getAsync('/parameters', async (req, res) => {
 router.putAsync('/parameters/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { executedWorkflowId, executedTaskId, name, value, date } = req.body;
+        const { workflowId, taskId, name, value, date } = req.body;
 
-        if (!executedWorkflowId || !executedTaskId || !name || !value || !date) {
+        if (!workflowId || !taskId || !name || !value || !date) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const document = {
-            executedWorkflowId,
-            executedTaskId,
+            workflowId,
+            taskId,
             name,
             value,
             date
@@ -101,7 +101,7 @@ router.putAsync('/parameters/:id', async (req, res) => {
         if (response.result === 'created') {
             res.status(200).json({ message: 'Parameter updated successfully', document });
         } else {
-            console.error('Error adding executed task:', response.body);
+            console.error('Error adding task:', response.body);
             return res.status(400).json({error: 'Failed to add parameter'});
         }
     } catch (error) {

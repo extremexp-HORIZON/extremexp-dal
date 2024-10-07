@@ -16,19 +16,6 @@ em.on('knex.migrate', async () => {
     console.log("migrate");
 });
 
-// Entity setup
-/*em.on('entitySettings.updateEntities', entityTypes => {
-    console.log("update");
-    entityTypes.model = {
-        entitiesTable: 'models',
-        sharesTable: 'shares_model',
-        permissionsTable: 'permissions_model',
-        clientLink: ({id}) => `/settings/models/${id}`
-    }
-    console.log("update");
-});*/
-
-// Normal routes
 em.on('app.installRoutes', app => {
     /*const modelsRest = require('./routes/rest/models');
     app.use('/rest', modelsRest);
@@ -40,24 +27,16 @@ em.on('app.installRoutes', app => {
 // API routes
 em.on('app.installAPIRoutes', app => {
     console.log("install api");
-    const signalsApi = require('./routes/api/signals');
-    const executedExperimentsApi = require('./routes/api/executed-experiments');
-    const executedWorkflowsApi = require('./routes/api/executed-workflows');
-    const executedTasksApi = require('./routes/api/executed-tasks');
+    const experimentsApi = require('./routes/api/experiments');
+    const workflowsApi = require('./routes/api/workflows');
     const metricsApi = require('./routes/api/metrics');
-    const parametersApi = require('./routes/api/parameters');
-    const inputDatasetsApi = require('./routes/api/input-datasets');
-    const outputDatasetsApi = require('./routes/api/output-datasets');
+
 
     console.log("install api");
     // app.use('/api', signalsApi);
-    app.use('/api', executedWorkflowsApi);
-    app.use('/api', executedExperimentsApi);
-    // app.use('/api', executedTasksApi);
+    app.use('/api', experimentsApi);
+    app.use('/api', workflowsApi);
     app.use('/api', metricsApi);
-    // app.use('/api', parametersApi);
-    // app.use('/api', inputDatasetsApi);
-    // app.use('/api', outputDatasetsApi);
     console.log("install api");
 });
 
@@ -79,5 +58,5 @@ console.log("set");
 console.log("set");
 
 require('../ivis-core/server/index');
-const executedWorkflowsApi = require("./routes/api/executed-workflows");
+const executedWorkflowsApi = require("./routes/api/workflows");
 

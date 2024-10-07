@@ -2,7 +2,7 @@
 
 ES_HOST="http://localhost:9200"
 
-indices=("executed_experiments" "executed_workflows" "executed_tasks" "metrics" "parameters"
+indices=("experiments" "workflows" "tasks" "metrics" "parameters"
 "input_datasets" "output_datasets" "signal_sets")
 
 delete_index_if_exists() {
@@ -28,7 +28,7 @@ create_index() {
     echo ""
 }
 
-executed_experiments_mapping='
+experiments_mapping='
 {
   "settings": {
     "number_of_shards": 1,
@@ -58,7 +58,7 @@ executed_experiments_mapping='
 }'
 
 
-executed_workflows_mappings='
+workflows_mappings='
 {
     "settings": {
         "number_of_shards": 1,
@@ -84,12 +84,12 @@ executed_workflows_mappings='
             "input_datasets_ids": { "type": "keyword" }
             "metric_ids": { "type": "keyword" },
             "output_ids": { "type": "keyword" },
-            "executed_tasks_id": {"type": "keyword" }
+            "tasks_id": {"type": "keyword" }
         }
     }
 }'
 
-executed_tasks_mappings='
+tasks_mappings='
 {
     "settings": {
         "number_of_shards": 1,
@@ -110,7 +110,7 @@ executed_tasks_mappings='
                 }
             },
             "comment": { "type": "text" },
-            "executed_workflow": { "type": "keyword" },
+            "workflow": { "type": "keyword" },
             "source_code": { "type": "text" },
             "parameter_ids":  { "type": "keyword" },
             "input_dataset_ids": { "type": "keyword" },
@@ -158,7 +158,7 @@ parameters_mappings='
             "name": { "type": "text" },
             "type": { "type": "keyword" },
             "value": { "type": "text" },
-            "usedByExecutedTasks": { "type": "text"},
+            "usedByTasks": { "type": "text"},
             "parent_type": { "type": "text" },
             "parent_id": { "type": "keyword" },
         }
@@ -207,14 +207,14 @@ output_datasets_mappings='
 for index in "${indices[@]}"; do
     delete_index_if_exists $index
     case $index in
-        "executed_experiments")
-            create_index $index "$executed_experiments_mapping"
+        "experiments")
+            create_index $index "$experiments_mapping"
             ;;
-        "executed_workflows")
-            create_index $index "$executed_workflows_mappings"
+        "workflows")
+            create_index $index "$workflows_mappings"
             ;;
-        "executed_tasks")
-            create_index $index "$executed_tasks_mappings"
+        "tasks")
+            create_index $index "$tasks_mappings"
             ;;
         "metrics")
             create_index $index "$metrics_mappings"
