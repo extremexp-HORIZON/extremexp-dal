@@ -4,11 +4,11 @@ const elasticsearch = require('../../../ivis-core/server/lib/elasticsearch');
 const router = require('../../../ivis-core/server/lib/router-async').create();
 const { addMetadataToQuery } = require('./util.js');
 
-async function updateWorkflowWithTask(taskId, executedWorkflow) {
+async function updateWorkflowWithTask(taskId, workflow) {
     try {
         const workflowResponse = await elasticsearch.get({
-            index: 'executed_workflows',
-            id: executedWorkflow
+            index: 'workflows',
+            id: workflow
         });
 
         const workflow = workflowResponse._source;
@@ -21,17 +21,17 @@ async function updateWorkflowWithTask(taskId, executedWorkflow) {
             workflow.tasks.push(taskId);
 
             await elasticsearch.update({
-                index: 'executed_workflows',
-                id: executedWorkflow,
+                index: 'workflows',
+                id: workflow,
                 body: { doc: { tasks: workflow.tasks } }
             });
         }
     } catch (error) {
-        console.error(`Workflow with ID ${executedWorkflow} not found`);
+        console.error(`Workflow with ID ${workflow} not found`);
     }
 }
 
-router.postAsync('/executed-tasks', async (req, res) => {
+router.postAsync('/tasks', async (req, res) => {
     try {
         const {
             id,
@@ -40,7 +40,7 @@ router.postAsync('/executed-tasks', async (req, res) => {
             end,
             metadata,
             comment,
-            executedWorkflow,
+            workflow,
             source_code,
             parameters,
             input_datasets,
@@ -48,7 +48,7 @@ router.postAsync('/executed-tasks', async (req, res) => {
             output_datasets
         } = req.body;
 
-        if (!name || !start || !end || !executedWorkflow) {
+        if (!name || !start || !end || !workflow) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
@@ -59,7 +59,7 @@ router.postAsync('/executed-tasks', async (req, res) => {
             end,
             metadata,
             comment,
-            executedWorkflow,
+            workflow,
             source_code,
             parameters,
             input_datasets,
@@ -68,16 +68,16 @@ router.postAsync('/executed-tasks', async (req, res) => {
         };
 
         const response = await elasticsearch.index({
-            index: 'executed_tasks',
+            index: 'tasks',
             body: document
         });
 
         if (response.result === 'created') {
-            await updateWorkflowWithTask(executedWorkflow);
-            return res.status(201).json({ message: 'Executed task added successfully', document: response.body });
+            await updateWorkflowWithTask(workflow);
+            return res.status(201).json({ message: 'Task added successfully', document: response.body });
         } else {
-            console.error('Error adding executed task:', response.body);
-            return res.status(400).json({ error: 'Failed to add executed task' });
+            console.error('Error adding task:', response.body);
+            return res.status(400).json({ error: 'Failed to add task' });
         }
     } catch (error) {
         console.error('Error adding task:', error);
@@ -85,9 +85,9 @@ router.postAsync('/executed-tasks', async (req, res) => {
     }
 });
 
-router.getAsync('/executed-tasks', async (req, res) => {
+router.getAsync('/tasks', async (req, res) => {
     try {
-        const { id, executedWorkflow, start, end } = req.query;
+        const { id, workflow, start, end } = req.query;
 
         const query = {
             bool: {
@@ -100,8 +100,8 @@ router.getAsync('/executed-tasks', async (req, res) => {
             query.bool.must.push({ match: { id } });
         }
 
-        if (executedWorkflow) {
-            query.bool.filter.push({ term: { executedWorkflow } });
+        if (workflow) {
+            query.bool.filter.push({ term: { workflow } });
         }
 
         if (start || end) {
@@ -117,15 +117,15 @@ router.getAsync('/executed-tasks', async (req, res) => {
         }
 
         const body = await elasticsearch.search({
-            index: 'executed_tasks',
+            index: 'tasks',
             body: { query }
         });
 
-        const executedTasks = body.hits.hits.map(hit => hit._source);
+        const tasks = body.hits.hits.map(hit => hit._source);
 
-        res.status(200).json(executedTasks);
+        res.status(200).json(tasks);
     } catch (error) {
-        console.error('Error retrieving executed tasks:', error);
+        console.error('Error retrieving tasks:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

@@ -4,6 +4,7 @@ const elasticsearch = require('../../../ivis-core/server/lib/elasticsearch');
 const router = require('../../../ivis-core/server/lib/router-async').create();
 
 const { addMetadataToQuery, validateSchema } = require('./util.js');
+const {aggregatieMetric} = require("./util");
 
 const REQUIRED_FIELDS = ['name', 'start', 'end'];
 function validateRequiredFields(body) {
@@ -24,7 +25,7 @@ const WORKFLOW_SCHEMA = {
         name: 'string',
         type: 'string',
         value: 'string',
-        usedByExecutedTasks: 'string'
+        usedByTasks: 'string'
 
     }],
     input_datasets: [{
@@ -51,14 +52,14 @@ const WORKFLOW_SCHEMA = {
         checksum: 'string',
         description: 'string',
     }],
-    executedTasks: [{
+    tasks: [{
         id: 'string',
         name: 'string',
         start: 'string',
         end: 'string',
         metadata: 'object',
         comment: 'string',
-        executedWorkflow: 'string',
+        workflow: 'string',
         source_code: 'string',
         parameters: [{
             name: 'string',
@@ -114,9 +115,9 @@ async function createSubIndex(subBody, indexText,  parentType, parentID, experim
 
 
 /**
- * Endpoint for uploading new executed workflow, body may contain experimentId
+ * Endpoint for uploading new workflow, body may contain experimentId
  */
-router.putAsync('/executed-workflows', async (req, res) => {
+router.putAsync('/workflows', async (req, res) => {
     try {
         const body = req.body;
 
@@ -126,35 +127,35 @@ router.putAsync('/executed-workflows', async (req, res) => {
         }
         body.status = "scheduled";
         const response = await elasticsearch.index({
-            index: 'executed_workflows',
+            index: 'workflows',
             body
         });
 
         if (response.result === 'created') {
             if (body.hasOwnProperty("experimentId")){
                 try {
-                    const executedExperiment = await elasticsearch.get({
-                        index: 'executed_experiments',
+                    const experiment = await elasticsearch.get({
+                        index: 'experiments',
                         id: body.experimentId,
                     });
-                    executedExperiment._source.workflow_ids.push(response._id);
+                    experiment._source.workflow_ids.push(response._id);
 
                     const updateResponse = await elasticsearch.update({
-                        index: 'executed_experiments',
+                        index: 'experiments',
                         id: body.experimentId,
                         body: {
                             doc: {
-                                workflow_ids: executedExperiment._source.workflow_ids
+                                workflow_ids: experiment._source.workflow_ids
                             }
                         }
                     });
                     if (updateResponse.result !== 'updated') {
-                        console.error('Error updating executed experiment:', response.body);
-                        return res.status(400).json({ error: 'Failed to update executed experiment' });
+                        console.error('Error updating experiment:', response.body);
+                        return res.status(400).json({ error: 'Failed to update experiment' });
                     }
                 } catch (error){
-                    console.error('Error adding executed workflow:', error);
-                    return res.status(404).json({ error: 'Executed experiment not found' });
+                    console.error('Error adding workflow:', error);
+                    return res.status(404).json({ error: 'Experiment not found' });
                 }
             }
             if (body.hasOwnProperty("metrics")) {
@@ -165,7 +166,7 @@ router.putAsync('/executed-workflows', async (req, res) => {
                         const metricObject = await createSubIndex(
                             metric,
                             'metrics',
-                            'executed_workflow',
+                            'workflow',
                             response._id,
                             body.experimentId );
 
@@ -182,7 +183,7 @@ router.putAsync('/executed-workflows', async (req, res) => {
                     }
 
                     const updateResponse = await elasticsearch.update({
-                        index: 'executed_workflows',
+                        index: 'workflows',
                         id: response._id,
                         body: {
                             doc: {
@@ -194,37 +195,37 @@ router.putAsync('/executed-workflows', async (req, res) => {
 
                 } catch (error){
                     console.error('Error adding metric', error);
-                    return res.status(404).json({ error: 'Executed experiment not found' });
+                    return res.status(404).json({ error: 'Experiment not found' });
                 }
             }
             return res.status(201).json({ workflow_id: response._id});
         } else {
-            console.error('Error adding executed workflow:', response);
-            return res.status(400).json({ error: 'Failed to add executed workflow' });
+            console.error('Error adding workflow:', response);
+            return res.status(400).json({ error: 'Failed to add workflow' });
         }
     } catch (error) {
-        console.error('Error adding executed workflow:', error);
+        console.error('Error adding workflow:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-router.postAsync('/executed-workflows/:workflowId', async (req, res) => {
+router.postAsync('/workflows/:workflowId', async (req, res) => {
     try {
         const { workflowId } = req.params;
         const body = req.body;
 
         try{
             const existingWorkflow = await elasticsearch.get({
-                index: 'executed_workflows',
+                index: 'workflows',
                 id: workflowId
             });
             if (!existingWorkflow) {
-                return res.status(404).json({ error: 'Executed workflow not found' });
+                return res.status(404).json({ error: 'Workflow not found' });
             }
         }
         catch(error)
         {
-            return res.status(404).json({ error: "Executed workflow not found" });
+            return res.status(404).json({ error: "Workflow not found" });
         }
 
         const validationError = validatePayload(body);
@@ -233,7 +234,7 @@ router.postAsync('/executed-workflows/:workflowId', async (req, res) => {
         }
 
         const response = await elasticsearch.update({
-            index: 'executed_workflows',
+            index: 'workflows',
             id: workflowId,
             body: { doc: body }
         });
@@ -242,33 +243,33 @@ router.postAsync('/executed-workflows/:workflowId', async (req, res) => {
             return res.status(200).json({ message: 'No updates needed', document: response.body });
         }
         if (response.result === 'updated') {
-            return res.status(200).json({ message: 'Executed workflow updated successfully', document: response.body });
+            return res.status(200).json({ message: 'Workflow updated successfully', document: response.body });
         } else {
-            console.error('Error updating executed workflow:', response.body);
-            return res.status(400).json({ error: 'Failed to update executed workflow' });
+            console.error('Error updating workflow:', response.body);
+            return res.status(400).json({ error: 'Failed to update workflow' });
         }
     } catch (error) {
-        console.error('Error updating executed workflow:', error);
+        console.error('Error updating workflow:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-router.getAsync('/executed-workflows/:workflowId', async (req, res) => {
+router.getAsync('/workflows/:workflowId', async (req, res) => {
         const { workflowId } = req.params;
 
         var workflowResponse;
         try {
             workflowResponse = await elasticsearch.get({
-                index: 'executed_workflows',
+                index: 'workflows',
                 id: workflowId
             });
         } catch(error){
-            return res.status(404).json({ error: 'Executed workflow not found' });
+            return res.status(404).json({ error: 'Workflow not found' });
         }
 
         try{
             if (!workflowResponse.found) {
-                return res.status(404).json({ error: 'Executed workflow not found' });
+                return res.status(404).json({ error: 'Workflow not found' });
             }
 
             const workflow = workflowResponse._source;
@@ -280,9 +281,12 @@ router.getAsync('/executed-workflows/:workflowId', async (req, res) => {
                         index: 'metrics',
                         id: metric
                     });
+                    const aggregation = aggregatieMetric(metricResponse);
                     if (metricResponse.found){
                         metricUpdates.push({
-                            [metric]: metricResponse._source
+                            [metric]: {
+                                ...metricResponse._source, aggregation:aggregation
+                            }
                         });
                     }
                 }
@@ -290,14 +294,24 @@ router.getAsync('/executed-workflows/:workflowId', async (req, res) => {
             }
             res.status(200).json({ workflow });
         } catch (error) {
-        console.error('Error retrieving executed workflow:', error);
+        console.error('Error retrieving workflow:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 })
+const EXPERIMENTS_QUERY_SCHEMA = {
+    experimentId: 'string',
+    startTime: 'string',
+    endTime: 'string',
+    metadata: 'object',
+};
 
-router.postAsync('/executed-workflows-query', async (req, res) => {
+
+router.postAsync('/workflows-query', async (req, res) => {
     try {
-        const { id, status, experimentId, startTime, endTime, startId, endId, metadata } = req.body;
+        const validationResult = validateSchema(req.body, EXPERIMENTS_QUERY_SCHEMA);
+        if (validationResult) {
+            return res.status(400).json({ error: `Validation error: ${validationResult}` });
+        }
 
         const query = {
             bool: {
@@ -306,30 +320,19 @@ router.postAsync('/executed-workflows-query', async (req, res) => {
             }
         };
 
-        if (id) {
-            query.bool.must.push({ match: { id } });
+        if (req.body.experimentId) {
+            query.bool.must.push({ term: { experimentId:req.body.experimentId } });
         }
 
-        if(experimentId){
-            query.bool.must.push({match: {experimentId}});
-        }
-
-        if (startTime || endTime) {
+        if (req.body.startTime || req.body.endTime) {
             const rangeQuery = {};
-            if (startTime) rangeQuery.gte = startTime;
-            if (endTime) rangeQuery.lte = endTime;
+            if (req.body.startTime) rangeQuery.gte = req.body.startTime;
+            if (req.body.endTime) rangeQuery.lte = req.body.endTime;
             query.bool.filter.push({ range: { start: rangeQuery } });
         }
 
-        if (startId || endId) {
-            const rangeQuery = {};
-            if (startId) rangeQuery.gte = startId;
-            if (endId) rangeQuery.lte = endId;
-            query.bool.filter.push({ range: { id: rangeQuery } });
-        }
-
-        if (metadata) {
-            for (const [key, value] of Object.entries(metadata)) {
+        if (req.body.metadata) {
+            for (const [key, value] of Object.entries(req.body.metadata)) {
                 query.bool.filter.push({
                     nested: {
                         path: 'metadata',
@@ -344,30 +347,24 @@ router.postAsync('/executed-workflows-query', async (req, res) => {
                 });
             }
         }
-        if (status) {
-            query.bool.must.push({ match: { status } });
-        }
 
         const body = await elasticsearch.search({
-            index: 'executed_workflows',
+            index: 'workflows',
             body: { query }
         });
 
-        const executedWorkflows = await Promise.all(
-            body.hits.hits.map(hit => ({
-                [hit._id]: {
-                    id: hit._id,
-                    ...hit._source
-                }
+        const workflows = body.hits.hits.map(hit => ({
+            id: hit._id,
+            ...hit._source
+        }));
 
-            })));
-
-        res.status(200).json(executedWorkflows);
+        res.status(200).json(workflows);
 
     } catch (error) {
-        console.error('Error retrieving executed workflows:', error);
+        console.error('Error retrieving workflows:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
 
 module.exports = router;
