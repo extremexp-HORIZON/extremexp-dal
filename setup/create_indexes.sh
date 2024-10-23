@@ -1,24 +1,25 @@
 #!/bin/bash
 
-ES_HOST="http://localhost:9200"
+ES_HOST="http://expvis-elasticsearch-1:9200"
 
-indices=("experiments" "workflows" "tasks" "metrics")
+indices=("experiments" "workflows" "metrics")
 
 delete_index_if_exists() {
     local index=$1
-    exists=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$ES_HOST/$index/_search?q=*")
+    exists="$(curl -s -o /dev/null -w "%{http_code}" -X HEAD "$ES_HOST/$index" -I)"
+
     if [ "$exists" -eq 200 ]; then
         echo "Deleting index: $index"
         curl -s -X DELETE "$ES_HOST/$index"
-        echo ""
-    else
+        echo "Index $index deleted."
+    elif [ "$exists" -eq 404 ]; then
         echo "Index $index does not exist, skipping delete."
-        echo ""
+    else
+        echo "Failed to check index $index. HTTP Status code: $exists"
     fi
 }
 
-
-# Function to create an index with the correct mappings
+# function to create an index with the correct mappings
 create_index() {
     local index=$1
     local mappings=$2
@@ -107,7 +108,7 @@ metrics_mappings='
             "records":{
               "type": "nested",
               "properties": {
-                "value" { "type": "text" }
+                "value": { "type": "text" }
               }
             }
         }
