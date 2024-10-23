@@ -300,6 +300,7 @@ router.getAsync('/workflows/:workflowId', async (req, res) => {
 })
 const EXPERIMENTS_QUERY_SCHEMA = {
     experimentId: 'string',
+    status: 'string',
     startTime: 'string',
     endTime: 'string',
     metadata: 'object',

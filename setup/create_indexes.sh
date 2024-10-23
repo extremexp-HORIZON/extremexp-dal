@@ -2,8 +2,7 @@
 
 ES_HOST="http://localhost:9200"
 
-indices=("experiments" "workflows" "tasks" "metrics" "parameters"
-"input_datasets" "output_datasets" "signal_sets")
+indices=("experiments" "workflows" "tasks" "metrics")
 
 delete_index_if_exists() {
     local index=$1
@@ -89,37 +88,6 @@ workflows_mappings='
     }
 }'
 
-tasks_mappings='
-{
-    "settings": {
-        "number_of_shards": 1,
-        "number_of_replicas": 1
-    },
-    "mappings": {
-        "properties": {
-            "experimentId" : { "type": "keyword"},
-            "id": { "type": "keyword" },
-            "name": { "type": "text" },
-            "start": { "type": "date" },
-            "end": { "type": "date" },
-            "metadata": {
-                "type": "nested",
-                "properties": {
-                    "key": { "type": "keyword" },
-                    "value": { "type": "text" }
-                }
-            },
-            "comment": { "type": "text" },
-            "workflow": { "type": "keyword" },
-            "source_code": { "type": "text" },
-            "parameter_ids":  { "type": "keyword" },
-            "input_dataset_ids": { "type": "keyword" },
-            "metric_ids": { "type": "keyword" },
-            "output_dataset_ids": { "type": "keyword" }
-        }
-    }
-}'
-
 metrics_mappings='
 {
     "settings": {
@@ -146,64 +114,6 @@ metrics_mappings='
     }
 }'
 
-parameters_mappings='
-{
-    "settings": {
-        "number_of_shards": 1,
-        "number_of_replicas": 1
-    },
-    "mappings": {
-        "properties": {
-            "experimentId" : { "type": "keyword"},
-            "name": { "type": "text" },
-            "type": { "type": "keyword" },
-            "value": { "type": "text" },
-            "usedByTasks": { "type": "text"},
-            "parent_type": { "type": "text" },
-            "parent_id": { "type": "keyword" },
-        }
-    }
-}'
-
-input_datasets_mappings='
-{
-    "settings": {
-        "number_of_shards": 1,
-        "number_of_replicas": 1
-    },
-    "mappings": {
-        "properties": {
-            "experimentId" : { "type": "keyword"},
-            "parent_type": { "type": "text" },
-            "parent_id": { "type": "keyword" },
-            "title": { "type": "text" },
-            "uri": { "type": "text" },
-            "date": { "type": "date" },
-            "checksum": { "type": "text" }
-        }
-    }
-}'
-
-output_datasets_mappings='
-{
-    "settings": {
-        "number_of_shards": 1,
-        "number_of_replicas": 1
-    },
-    "mappings": {
-        "properties": {
-            "experimentId" : { "type": "keyword"},
-            "parent_type": { "type": "text" },
-            "parent_id": { "type": "keyword" },
-            "title": { "type": "text" },
-            "uri": { "type": "text" },
-            "date": { "type": "date" },
-            "checksum": { "type": "text" },
-            "description": { "type": "text" }
-        }
-    }
-}'
-
 for index in "${indices[@]}"; do
     delete_index_if_exists $index
     case $index in
@@ -213,20 +123,8 @@ for index in "${indices[@]}"; do
         "workflows")
             create_index $index "$workflows_mappings"
             ;;
-        "tasks")
-            create_index $index "$tasks_mappings"
-            ;;
         "metrics")
             create_index $index "$metrics_mappings"
-            ;;
-        "parameters")
-            create_index $index "$parameters_mappings"
-            ;;
-        "input_datasets")
-            create_index $index "$input_datasets_mappings"
-            ;;
-        "output_datasets")
-            create_index $index "$output_datasets_mappings"
             ;;
     esac
 done

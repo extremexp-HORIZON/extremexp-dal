@@ -59,7 +59,7 @@ router.putAsync('/metrics', async (req, res) => {
         }
 
         body.experimentId = parentResponse._source.experimentId;
-        const otherMetrics = (parentResponse._source.metrics) ? parentResponse._source.metrics : [];
+        //const otherMetrics = (parentResponse._source.metrics) ? parentResponse._source.metrics : [];
         const otherMetricIds = (parentResponse._source.metric_ids) ? parentResponse._source.metric_ids : [];
 
         const response = await elasticsearch.index({
@@ -67,14 +67,14 @@ router.putAsync('/metrics', async (req, res) => {
             body
         });
         if (response.result === 'created') {
-            otherMetrics.push({[response._id]: body});
+            //otherMetrics.push({[response._id]: body});
             otherMetricIds.push(response._id);
             await elasticsearch.update({
                 index: `${body.parent_type}s`,
                 id: body.parent_id,
                 body: {
                     doc: {
-                        metrics: otherMetrics,
+                        //metrics: otherMetrics,
                         metric_ids: otherMetricIds
                     }
                 }
