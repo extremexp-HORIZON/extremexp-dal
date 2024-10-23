@@ -300,12 +300,11 @@ router.getAsync('/workflows/:workflowId', async (req, res) => {
 })
 const EXPERIMENTS_QUERY_SCHEMA = {
     experimentId: 'string',
-    status: 'string',
+    status: 'string',  // Added status to schema
     startTime: 'string',
     endTime: 'string',
     metadata: 'object',
 };
-
 
 router.postAsync('/workflows-query', async (req, res) => {
     try {
@@ -321,10 +320,17 @@ router.postAsync('/workflows-query', async (req, res) => {
             }
         };
 
+        // Query for experimentId
         if (req.body.experimentId) {
-            query.bool.must.push({ term: { experimentId:req.body.experimentId } });
+            query.bool.must.push({ term: { experimentId: req.body.experimentId } });
         }
 
+        // Query for status
+        if (req.body.status) {
+            query.bool.must.push({ term: { status: req.body.status } });
+        }
+
+        // Query for startTime and endTime
         if (req.body.startTime || req.body.endTime) {
             const rangeQuery = {};
             if (req.body.startTime) rangeQuery.gte = req.body.startTime;
@@ -332,6 +338,7 @@ router.postAsync('/workflows-query', async (req, res) => {
             query.bool.filter.push({ range: { start: rangeQuery } });
         }
 
+        // Query for metadata
         if (req.body.metadata) {
             for (const [key, value] of Object.entries(req.body.metadata)) {
                 query.bool.filter.push({
@@ -349,11 +356,13 @@ router.postAsync('/workflows-query', async (req, res) => {
             }
         }
 
+        // Perform the search
         const body = await elasticsearch.search({
             index: 'workflows',
             body: { query }
         });
 
+        // Map results
         const workflows = body.hits.hits.map(hit => ({
             id: hit._id,
             ...hit._source
