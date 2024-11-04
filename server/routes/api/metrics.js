@@ -210,96 +210,118 @@ router.putAsync('/metrics-data/:metricId', async (req, res) => {
     }
 });
 
-router.postAsync('/metrics-data/:metricId', async (req, res) => {
+router.getAsync('/metrics', async (req, res) => {
+    try {
+        let metricsResponse;
+        try {
+            metricsResponse = await elasticsearch.search({
+                index: 'metrics',
+                size: 1000,
+                scroll: '1m', // Keep the search context alive for 1 minute
+                body: {
+                    query: {
+                        match_all: {}
+                    }
+                }
+            });
+        } catch (error) {
+            return res.status(404).json({ error: 'Metrics not found' });
+        }
 
-});
+        if (!metricsResponse.hits || metricsResponse.hits.total.value === 0) {
+            return res.status(404).json({ error: 'Metrics not found' });
+        }
+
+        const metrics = metricsResponse.hits.hits.map(hit => ({
+            [hit._id]: {
+                id: hit._id,
+                ...hit._source
+            }
+
+        }));
+        res.status(200).json({ metrics });
+    } catch (error) {
+        console.error('Error retrieving metrics:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+const METRIC_QUERY_SCHEMA = {
+    experimentId: 'string',
+    kind: 'string',
+    type: 'string',
+    semantic_type: 'string',
+    parent_id: 'string',
+    parent_type: 'string',
+};
+
 
 router.postAsync('/metrics-query', async (req, res) => {
     try {
-        const { experimentId, parent_id , metadata} = req.body;
-
-        const mustConditions = [];
-
-        if (experimentId) {
-            mustConditions.push({ match: { 'experimentId': experimentId } });
-        }
-
-        if (parent_id) {
-            mustConditions.push({ match: { 'parent_id': parent_id } });
-        }
-
-        if (metadata) {
-            for (const [key, value] of Object.entries(metadata)) {
-                mustConditions.push({
-                    nested: {
-                        path: 'metrics.metadata',
-                        query: {
-                            bool: {
-                                must: [
-                                    { match: { [`metrics.metadata.${key}`]: value } }
-                                ]
-                            }
-                        }
-                    }
-                });
-            }
+        const validationResult = validateSchema(req.body, METRIC_QUERY_SCHEMA);
+        if (validationResult) {
+            return res.status(400).json({
+                error: `Validation error: ${validationResult}`,
+                expected: Object.keys(METRIC_QUERY_SCHEMA)
+            });
         }
 
         const query = {
             bool: {
-                must: mustConditions
+                must: [],
+                filter: []
             }
         };
 
-        const response = await elasticsearch.search({
-            index: 'workflows',
-            body: {
-                query
-            }
-        });
-
-        const metrics = response.hits.hits.flatMap(hit => {
-            const source = hit._source;
-            if (source.metrics) {
-                return source.metrics.filter(metric => {
-                    if (metadata) {
-                        return Object.entries(metadata).every(([key, value]) => {
-                            return metric.metadata && metric.metadata[key] === value;
-                        });
-                    }
-                    return true;
-                }).map(metric => {
-                    if (metric.type === 'scalar') {
-                        return {
-                            ...metric,
-                            value: metric.value
-                        };
-                    }
-                    return metric;
-                });
-            }
-            return [];
-        });
-
-        res.status(200).json(metrics);
-    } catch (error) {
-        if (error.message.includes('Permission denied')) {
-            return res.status(400).json({ error: 'Permission denied', details: error.message });
+        // Query for experimentId
+        if (req.body.experimentId) {
+            query.bool.must.push({ match: { experimentId: req.body.experimentId } });
         }
 
+        // Query for kind
+        if (req.body.kind) {
+            query.bool.must.push({ term: { kind: req.body.kind } });
+        }
+
+        // Query for type
+        if (req.body.type) {
+            query.bool.must.push({ term: { type: req.body.type } });
+        }
+
+        // Query for semantic_type
+        if (req.body.semantic_type) {
+            query.bool.must.push({ term: { semantic_type: req.body.semantic_type } });
+        }
+
+        // Query for parent_id
+        if (req.body.parent_id) {
+            query.bool.must.push({match: {parent_id: req.body.parent_id}});
+        }
+
+        // Query for parent_type
+        if (req.body.parent_type) {
+            query.bool.must.push({ term: { parent_type: req.body.parent_type } });
+        }
+
+        // Perform the search
+        const body = await elasticsearch.search({
+            index: 'metrics',
+            body: { query }
+        });
+
+        console.log(query.bool.must);
+
+        // Map results
+        const metrics = body.hits.hits.map(hit => ({
+            id: hit._id,
+            ...hit._source
+        }));
+
+        res.status(200).json(metrics);
+
+    } catch (error) {
         console.error('Error retrieving metrics:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-
-// Aggregation
-// const sum = calculateSum(metric.data);
-// const min = calculateMin(metric.data);
-// const max = calculateMax(metric.data);
-// const average = calculateAverage(metric.data);
-// const count = calculateCount(metric.data);
-// const range = calculateRange(metric.data);
-// const median = calculateMedian(metric.data);
 
 module.exports = router;
