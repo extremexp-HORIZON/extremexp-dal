@@ -3,29 +3,27 @@ services:
     image: mariadb:latest
     environment:
       MYSQL_ROOT_PASSWORD: expvis
-      MYQL_DATABASE: expvis
+      MYSQL_DATABASE: expvis
       MYSQL_USER: expvis
       MYSQL_PASSWORD: expvis
-    ports:
-      - "3305:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
 
   redis:
     image: redis:latest
-    ports:
-      - "6380:6379"
     volumes:
       - redis_data:/data
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-    ports:
-      - "9200:9200"
-      - "9300:9300"
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
 
@@ -36,6 +34,12 @@ services:
       dockerfile: ${EXPVIS_REPO_PATH}/Dockerfile
     environment:
       NODE_ENV: development
+      MYSQL_USER: expvis
+      MYSQL_PASSWORD: expvis
+      MYSQL_DATABASE: expvis
+      MYSQL_HOST: expvis-mariadb-1
+      REDIS_HOST: expvis-redis-1
+      ELASTICSEARCH_HOST: http://expvis-elasticsearch-1:9200
       DMS_PATH: /app/services/dms
     ports:
       - "8443:8443"
