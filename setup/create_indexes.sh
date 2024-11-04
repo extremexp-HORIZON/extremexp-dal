@@ -19,13 +19,31 @@ delete_index_if_exists() {
     fi
 }
 
-# function to create an index with the correct mappings
+# Function to create an index with the correct mappings
 create_index() {
     local index=$1
     local mappings=$2
     echo "Creating index: $index"
     curl -s -X PUT "$ES_HOST/$index" -H 'Content-Type: application/json' -d"$mappings"
     echo ""
+}
+
+# Function to update an index if it exists, otherwise create it
+update_index_if_exists() {
+    local index=$1
+    local mappings=$2
+    exists="$(curl -s -o /dev/null -w "%{http_code}" -X HEAD "$ES_HOST/$index" -I)"
+
+    if [ "$exists" -eq 200 ]; then
+        echo "Updating index: $index"
+        curl -s -X PUT "$ES_HOST/$index/_mapping" -H 'Content-Type: application/json' -d"$mappings"
+        echo "Index $index updated."
+    elif [ "$exists" -eq 404 ]; then
+        echo "Index $index does not exist, creating it."
+        create_index "$index" "$mappings"
+    else
+        echo "Failed to check index $index. HTTP Status code: $exists"
+    fi
 }
 
 experiments_mapping='
@@ -56,7 +74,6 @@ experiments_mapping='
     }
   }
 }'
-
 
 workflows_mappings='
 {
@@ -102,7 +119,7 @@ metrics_mappings='
             "parent_id": { "type": "keyword" },
             "type": { "type": "text"},
             "semantic_type": { "type" : "text" },
-	    "kind": {"type": "text"},
+            "kind": {"type": "text"},
             "name": { "type": "text" },
             "value": { "type": "text" },
             "date": { "type": "date" },
@@ -117,18 +134,17 @@ metrics_mappings='
 }'
 
 for index in "${indices[@]}"; do
-    delete_index_if_exists $index
     case $index in
         "experiments")
-            create_index $index "$experiments_mapping"
+            update_index_if_exists $index "$experiments_mapping"
             ;;
         "workflows")
-            create_index $index "$workflows_mappings"
+            update_index_if_exists $index "$workflows_mappings"
             ;;
         "metrics")
-            create_index $index "$metrics_mappings"
+            update_index_if_exists $index "$metrics_mappings"
             ;;
     esac
 done
 
-echo "Completed recreating indices."
+echo "Completed updating or creating indices."
