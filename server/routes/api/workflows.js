@@ -37,8 +37,9 @@ const WORKFLOW_SCHEMA = {
     }],
     metrics: [{
         name: 'string',
-        semanticType: 'string',
+        semantic_type: 'string',
         type: 'string',
+        kind: 'string',
         value: 'string',
         producedByTask: 'string',
         date: 'string',
@@ -74,10 +75,11 @@ const WORKFLOW_SCHEMA = {
         }],
         metrics: [{
             name: 'string',
+            semantic_type: 'string',
             type: 'string',
-            semanticType: 'string',
+            kind: 'string',
             value: 'string',
-            date: 'string'
+            date: 'string',
         }],
         output_datasets: [{
             type: 'string',
@@ -95,14 +97,14 @@ function validatePayload(body) {
     return validateSchema(body, WORKFLOW_SCHEMA);
 }
 
-async function createSubIndex(subBody, indexText,  parentType, parentID, experimentID) {
+async function createSubIndex(subBody, indexText,  parentType, parentID, experimentId) {
     const subIndex = await elasticsearch.index({
         index: indexText,
         body: {
             ...subBody,
             parent_type: parentType,
             parent_id: parentID,
-            experiment_id: experimentID
+            experimentId: experimentId
         }
     });
    if (subIndex.result === "created"){
@@ -198,6 +200,7 @@ router.putAsync('/workflows', async (req, res) => {
                     return res.status(404).json({ error: 'Experiment not found' });
                 }
             }
+
             return res.status(201).json({ workflow_id: response._id});
         } else {
             console.error('Error adding workflow:', response);
@@ -298,17 +301,53 @@ router.getAsync('/workflows/:workflowId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 })
-const EXPERIMENTS_QUERY_SCHEMA = {
+
+router.getAsync('/workflows', async (req, res) => {
+    try {
+        let workflowsResponse;
+        try {
+            workflowsResponse = await elasticsearch.search({
+                index: 'workflows',
+                size: 1000,
+                scroll: '1m', // Keep the search context alive for 1 minute
+                body: {
+                    query: {
+                        match_all: {}
+                    }
+                }
+            });
+        } catch (error) {
+            return res.status(404).json({ error: 'Workflows not found' });
+        }
+
+        if (!workflowsResponse.hits || workflowsResponse.hits.total.value === 0) {
+            return res.status(404).json({ error: 'Workflow not found' });
+        }
+
+        const workflows = workflowsResponse.hits.hits.map(hit => ({
+            [hit._id]: {
+                id: hit._id,
+                ...hit._source
+            }
+
+        }));
+        res.status(200).json({ workflows });
+    } catch (error) {
+        console.error('Error retrieving workflows:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+const WORKFLOW_QUERY_SCHEMA = {
     experimentId: 'string',
     status: 'string',  // Added status to schema
-    startTime: 'string',
-    endTime: 'string',
+    start: 'string',
+    end: 'string',
     metadata: 'object',
 };
 
 router.postAsync('/workflows-query', async (req, res) => {
     try {
-        const validationResult = validateSchema(req.body, EXPERIMENTS_QUERY_SCHEMA);
+        const validationResult = validateSchema(req.body, WORKFLOW_QUERY_SCHEMA);
         if (validationResult) {
             return res.status(400).json({ error: `Validation error: ${validationResult}` });
         }
@@ -331,10 +370,10 @@ router.postAsync('/workflows-query', async (req, res) => {
         }
 
         // Query for startTime and endTime
-        if (req.body.startTime || req.body.endTime) {
+        if (req.body.start || req.body.end) {
             const rangeQuery = {};
-            if (req.body.startTime) rangeQuery.gte = req.body.startTime;
-            if (req.body.endTime) rangeQuery.lte = req.body.endTime;
+            if (req.body.start) rangeQuery.gte = req.body.start;
+            if (req.body.end) rangeQuery.lte = req.body.end;
             query.bool.filter.push({ range: { start: rangeQuery } });
         }
 
