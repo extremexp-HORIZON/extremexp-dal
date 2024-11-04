@@ -30,7 +30,8 @@ const METRIC_DEFINITION_SCHEMA = {
 };
 const METRIC_SCHEMA = {
     name: 'string',
-    semanticType: 'string',
+    semantic_type: 'string',
+    kind: 'string',
     type: 'string',
     value: 'string',
     producedByTask: 'string',
@@ -215,7 +216,7 @@ router.postAsync('/metrics-data/:metricId', async (req, res) => {
 
 router.postAsync('/metrics-query', async (req, res) => {
     try {
-        const { experimentId, workflowId , metadata} = req.body;
+        const { experimentId, parent_id , metadata} = req.body;
 
         const mustConditions = [];
 
@@ -223,8 +224,8 @@ router.postAsync('/metrics-query', async (req, res) => {
             mustConditions.push({ match: { 'experimentId': experimentId } });
         }
 
-        if (workflowId) {
-            mustConditions.push({ match: { 'workflowId': workflowId } });
+        if (parent_id) {
+            mustConditions.push({ match: { 'parent_id': parent_id } });
         }
 
         if (metadata) {
