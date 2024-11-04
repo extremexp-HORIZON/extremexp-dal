@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ES_HOST="http://expvis-elasticsearch-1:9200"
+ES_HOST=${ELASTICSEARCH_HOST:-"http://localhost:9200"}
 
 indices=("experiments" "workflows" "metrics")
 
@@ -102,6 +102,7 @@ metrics_mappings='
             "parent_id": { "type": "keyword" },
             "type": { "type": "text"},
             "semantic_type": { "type" : "text" },
+	    "kind": {"type": "text"},
             "name": { "type": "text" },
             "value": { "type": "text" },
             "date": { "type": "date" },
