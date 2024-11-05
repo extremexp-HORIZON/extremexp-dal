@@ -256,6 +256,42 @@ router.postAsync('/workflows/:workflowId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+async function getWorkflowById(workflowId){
+    let workflowResponse;
+    try {
+        workflowResponse = await elasticsearch.get({
+            index: 'workflows',
+            id: workflowId
+        });
+
+        const workflow = workflowResponse._source;
+        // convert the metrics source to actual metrics (with values)
+        if (workflow.hasOwnProperty("metric_ids")) {
+            const metricUpdates = [];
+            for (const metric of workflow.metric_ids) {
+                const metricResponse = await elasticsearch.get({
+                    index: 'metrics',
+                    id: metric
+                });
+                const aggregation = aggregatieMetric(metricResponse);
+                if (metricResponse.found) {
+                    metricUpdates.push({
+                        [metric]: {
+                            ...metricResponse._source, aggregation: aggregation
+                        }
+                    });
+                }
+            }
+            workflow.metrics = metricUpdates;
+        }
+
+        return {'id':workflowId, ...workflow};
+    } catch(error){
+        console.log (error);
+        return {};
+    }
+
+}
 
 router.getAsync('/workflows/:workflowId', async (req, res) => {
         const { workflowId } = req.params;
@@ -301,6 +337,7 @@ router.getAsync('/workflows/:workflowId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 })
+
 
 router.getAsync('/workflows', async (req, res) => {
     try {
@@ -402,10 +439,11 @@ router.postAsync('/workflows-query', async (req, res) => {
         });
 
         // Map results
-        const workflows = body.hits.hits.map(hit => ({
-            id: hit._id,
-            ...hit._source
-        }));
+        const workflows = await Promise.all(
+            body.hits.hits.map(async hit => (
+                await getWorkflowById(hit._id)
+            ))
+        );
 
         res.status(200).json(workflows);
 
