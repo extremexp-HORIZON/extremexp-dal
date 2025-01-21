@@ -1,11 +1,10 @@
 'use strict';
 
 const elasticsearch = require('../../../ivis-core/server/lib/elasticsearch');
-const {validateSchema} = require("./util");
+const {validateSchema, getWorkflowById} = require("./util");
 const router = require('../../../ivis-core/server/lib/router-async').create();
 const { exec, execSync } = require('child_process');
 const {toJSON} = require("express-session/session/cookie");
-
 const REQUIRED_FIELDS = ['name', 'intent'];
 
 function validateRequiredFields(body) {
@@ -187,7 +186,6 @@ function moveElementBeforeAnother(array, a, b) {
     // Find the indices of elements a and b
     const indexA = array.indexOf(a);
     const indexB = array.indexOf(b);
-    console.log("done here");
 
     // If either element is not found, return the array as is
     if (indexA === -1 || indexB === -1) {
@@ -235,13 +233,18 @@ router.postAsync('/experiments-sort-workflows/:experimentId', async (req, res) =
             id: experimentId,
             body: { doc:
                     {
-                        "workflow_ids": workflowIdList,
+                        "workflows": workflowIdList,
                     }
             }
         });
-        console.log(response);
         if (response.result === "updated" || response.result === "noop" ){
-            return res.status(200).json(workflowIdList);
+            const workflows = await Promise.all(
+                workflowIdList.map(async hit => (
+                    await getWorkflowById(hit)
+                ))
+            );
+            console.log("here - > " + workflows);
+            return res.status(200).json(workflows);
         }
         else{
             return res.status(500).json({ error: 'Internal server error' });

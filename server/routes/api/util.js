@@ -1,3 +1,5 @@
+const elasticsearch = require('../../../ivis-core/server/lib/elasticsearch');
+
 function addMetadataToQuery(req, query) {
     const keys = req.query.key ? [].concat(req.query.key) : [];
     const values = req.query.value ? [].concat(req.query.value) : [];
@@ -128,4 +130,39 @@ function aggregatieMetric(metricResponse){
     return aggregation;
 }
 
-module.exports = { addMetadataToQuery, validateSchema, aggregatieMetric };
+async function getWorkflowById(workflowId){
+    let workflowResponse;
+    try {
+        workflowResponse = await elasticsearch.get({
+            index: 'workflows',
+            id: workflowId
+        });
+        const workflow = workflowResponse._source;
+        // convert the metrics source to actual metrics (with values)
+        if (workflow.hasOwnProperty("metric_ids")) {
+            const metricUpdates = [];
+            for (const metric of workflow.metric_ids) {
+                const metricResponse = await elasticsearch.get({
+                    index: 'metrics',
+                    id: metric
+                });
+                const aggregation = aggregatieMetric(metricResponse);
+                if (metricResponse.found) {
+                    metricUpdates.push({
+                        [metric]: {
+                            ...metricResponse._source, aggregation: aggregation
+                        }
+                    });
+                }
+            }
+            workflow.metrics = metricUpdates;
+        }
+        return {'id':workflowId, ...workflow};
+    } catch(error){
+        console.log (error);
+        return {};
+    }
+
+}
+
+module.exports = { addMetadataToQuery, validateSchema, aggregatieMetric, getWorkflowById };
