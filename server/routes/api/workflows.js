@@ -25,7 +25,8 @@ const WORKFLOW_SCHEMA = {
         name: 'string',
         type: 'string',
         value: 'string',
-        usedByTasks: 'string'
+        usedByTasks: 'string',
+        metadata: 'object',
 
     }],
     input_datasets: [{
@@ -33,7 +34,8 @@ const WORKFLOW_SCHEMA = {
         uri: 'string',
         usedByTasks: 'string',
         date: 'string',
-        checksum: 'string'
+        checksum: 'string',
+        metadata: 'object',
     }],
     metrics: [{
         name: 'string',
@@ -43,6 +45,7 @@ const WORKFLOW_SCHEMA = {
         value: 'string',
         producedByTask: 'string',
         date: 'string',
+        metadata: 'object',
     }],
     output_datasets: [{
         name: 'string',
@@ -52,6 +55,7 @@ const WORKFLOW_SCHEMA = {
         date: 'string',
         checksum: 'string',
         description: 'string',
+        metadata: 'object',
     }],
     tasks: [{
         id: 'string',
@@ -71,6 +75,7 @@ const WORKFLOW_SCHEMA = {
             name: 'string',
             uri: 'string',
             date: 'string',
+            metadata: 'object',
             checksum: 'string'
         }],
         metrics: [{
@@ -87,6 +92,7 @@ const WORKFLOW_SCHEMA = {
             name: 'string',
             date: 'string',
             checksum: 'string',
+            metadata: 'object',
             description: 'string'
         }]
     }]
