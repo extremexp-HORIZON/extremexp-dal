@@ -151,3 +151,8 @@ The following volumes are used to persist data:
 
 - Ensure that the Git credentials are properly set in the environment to allow submodule updates.
 - The application uses a specific branch (`extremeXP`) for the `ivis-core` repository.
+
+
+# Deployed server
+for the documentation check:
+https://documenter.getpostman.com/view/37096355/2sA3sAio7d
