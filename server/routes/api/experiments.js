@@ -1,7 +1,7 @@
 'use strict';
 
 const elasticsearch = require('../../../ivis-core/server/lib/elasticsearch');
-const {validateSchema, getWorkflowById} = require("./util");
+const {validateSchema, getWorkflowById, aggregatieMetric} = require("./util");
 const router = require('../../../ivis-core/server/lib/router-async').create();
 const { exec, execSync } = require('child_process');
 const {toJSON} = require("express-session/session/cookie");
@@ -310,6 +310,66 @@ router.postAsync('/experiments-query', async (req, res) => {
         })));
 
         res.status(200).json(experiments);
+    } catch (error) {
+        console.error('Error retrieving experiments:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+const EXPERIMENTS_METRICS_SCHEMA = {
+    experiment_ids: 'object'
+};
+
+router.postAsync('/experiments-metrics', async (req, res) => {
+    try {
+        const validationResult = validateSchema(req.body, EXPERIMENTS_METRICS_SCHEMA);
+        if (validationResult) {
+            return res.status(400).json({ error: `Validation error: ${validationResult}` });
+        }
+
+        try {
+            if (!req.body.experiment_ids || !Array.isArray(req.body.experiment_ids)) {
+                return res.status(400).json({ error: "Invalid schema: 'experiments' field is missing or not an array"});
+            }
+
+            try {
+                let results = {};
+                for (let i=0; i<req.body.experiment_ids.length; i++){
+                    let experimentId = req.body.experiment_ids[i];
+
+                    const response = await elasticsearch.search({
+                        index: 'metrics',
+                        body: {
+                            query: {
+                                match: {experimentId: experimentId}
+                            }
+                        }
+                    });
+                    if (response.hits.hits.length > 0){
+                        response.hits.hits.forEach(hit => {
+                            let aggregation = aggregatieMetric(hit);
+                            if (Object.keys(aggregation).length > 0) {
+                                results[hit._id] = {...hit._source, aggregation: aggregation};
+                            }
+                            else {
+                                results[hit._id] = hit._source;
+                            }
+                        })
+                    }
+                }
+
+
+                res.status(200).json({metrics: results});
+            }
+            catch (error) {
+                console.log(error);
+                return res.status(400).json({ error: `Error querying metrics for experiment ID: ${experiment.id}: ${error}`});
+            }
+        }
+        catch (error) {
+            return res.status(400).json({ error: error});
+        }
+
     } catch (error) {
         console.error('Error retrieving experiments:', error);
         res.status(500).json({ error: 'Internal server error' });

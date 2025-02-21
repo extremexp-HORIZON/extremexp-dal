@@ -59,7 +59,12 @@ router.putAsync('/metrics', async (req, res) => {
             return res.status(404).json({error: `${body.parent_type} with id ${body.parent_id}  not found`});
         }
 
-        body.experimentId = parentResponse._source.experimentId;
+        if (body.parent_type === "experiment"){
+            body.experimentId = parentResponse._id;
+        }
+        else {
+            body.experimentId = parentResponse._source.experimentId;
+        }
         //const otherMetrics = (parentResponse._source.metrics) ? parentResponse._source.metrics : [];
         const otherMetricIds = (parentResponse._source.metric_ids) ? parentResponse._source.metric_ids : [];
 
