@@ -253,6 +253,7 @@ router.getAsync('/metrics', async (req, res) => {
 const METRIC_QUERY_SCHEMA = {
     experimentId: 'string',
     kind: 'string',
+    name: 'string',
     type: 'string',
     semantic_type: 'string',
     parent_id: 'string',
@@ -284,12 +285,15 @@ router.postAsync('/metrics-query', async (req, res) => {
 
         // Query for kind
         if (req.body.kind) {
-            query.bool.must.push({ term: { kind: req.body.kind } });
+            query.bool.must.push({ match: { kind: req.body.kind } });
         }
-
+        // Query for name
+        if (req.body.name) {
+            query.bool.must.push({ match: { name: req.body.name } });
+        }
         // Query for type
         if (req.body.type) {
-            query.bool.must.push({ term: { type: req.body.type } });
+            query.bool.must.push({ match: { type: req.body.type } });
         }
 
         // Query for semantic_type
