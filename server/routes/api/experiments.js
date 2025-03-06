@@ -17,6 +17,7 @@ const EXPERIMENTS_SCHEMA = {
     end: 'string',
     intent: 'string',
     metadata: 'object',
+    creator: 'object',
     status: 'string',
     comment: 'string',
     model: 'string'
@@ -260,6 +261,7 @@ router.postAsync('/experiments-sort-workflows/:experimentId', async (req, res) =
 const EXPERIMENTS_QUERY_SCHEMA = {
     intent: 'string',
     metadata: 'object',
+    creator: 'object'
 };
 
 router.postAsync('/experiments-query', async (req, res) => {
@@ -294,6 +296,11 @@ router.postAsync('/experiments-query', async (req, res) => {
                         }
                     }
                 });
+            }
+        }
+        if (req.body.creator) {
+            for (const [key, value] of Object.entries(req.body.creator)) {
+                query.bool.must.push({ match: { [`creator.${key}`]: value  } });
             }
         }
 
