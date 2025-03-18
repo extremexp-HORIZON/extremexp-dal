@@ -1,0 +1,89 @@
+enabledLanguages:
+- en-US
+
+www:
+
+  trustedPort: 8443
+  trustedPortIsHttps: false
+  sandboxPort: 8444
+  sandboxPortIsHttps: false
+  apiPort: 8445
+  apiPortIsHttps: false
+
+  trustedUrlBase: {CHANGE to address of the host for base}
+  sandboxUrlBase: {CHANGE to address of the host for sandbox}
+
+
+mysql:
+  host: mariadb
+  user: expvis
+  password: expvis
+  database: expvis
+  port: 3306
+
+elasticsearch:
+  host: elasticsearch
+  port: 9200
+
+redis:
+  enabled: false
+
+partners:
+  namespace: 1
+
+roles:
+  global:
+    partner:
+      name: "Partner"
+      description: "Project partner permissions"
+      admin: false
+      permissions:
+        - allocateSignalSet
+        - showAdmin
+        - showAdminWorkspaces
+        - showAdminSignalSets
+        - showAdminNamespaces
+      rootNamespaceRole: partner
+
+  namespace:
+    partner:
+      name: "Partner"
+      description: "Project partner permissions"
+      permissions: [ "view", "edit", "delete", "share", "createNamespace", "createWorkspace", "createPanel", "createSignal", "createSignalSet" ]
+      children:
+        namespace: [ "view", "edit", "delete", "share", "createNamespace", "createWorkspace", "createPanel", "createSignal", "createSignalSet" ]
+        template: [ "view", "execute", "viewFiles" ]
+        workspace: [ "view", "edit", "delete", "share", "createPanel" ]
+        panel: [ "view", "edit", "delete", "share" ]
+        signal: [ "view", "edit", "delete", "query", "share" ]
+        signalSet: [ "view", "edit", "delete", "insertRecord", "editRecord", "deleteRecord", "query", "share", "reindex", "createSignal", "manageScripts" ]
+
+  template:
+    partner:
+      name: "Partner"
+      description: "Project partner permissions"
+      permissions: [ "view", "execute", "viewFiles" ]
+
+  workspace:
+    partner:
+      name: "Partner"
+      description: "Project partner permissions"
+      permissions: [ "view", "edit", "delete", "share", "createPanel" ]
+
+  panel:
+    partner:
+      name: "Partner"
+      description: "Project partner permissions"
+      permissions: [ "view", "edit", "delete", "share" ]
+
+  signal:
+    partner:
+      name: "Partner"
+      description: "Project partner permissions"
+      permissions: [ "view", "edit", "delete", "query", "share" ]
+
+  signalSet:
+    partner:
+      name: "Partner"
+      description: "Project partner permissions"
+      permissions: [ "view", "edit", "delete", "insertRecord", "editRecord", "deleteRecord", "query", "share", "reindex", "createSignal", "manageScripts" ]

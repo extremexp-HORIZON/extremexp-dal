@@ -33,7 +33,7 @@ services:
       context: ${EXPVIS_REPO_PATH}
       dockerfile: ${EXPVIS_REPO_PATH}/Dockerfile
     environment:
-      NODE_ENV: development
+      NODE_ENV: local
       MYSQL_USER: expvis
       MYSQL_PASSWORD: expvis
       MYSQL_DATABASE: expvis
