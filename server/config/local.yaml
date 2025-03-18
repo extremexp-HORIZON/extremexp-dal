@@ -10,8 +10,8 @@ www:
   apiPort: 8445
   apiPortIsHttps: false
 
-  trustedUrlBase: {CHANGE to address of the host for base}
-  sandboxUrlBase: {CHANGE to address of the host for sandbox}
+  trustedUrlBase: http://localhost:8443
+  sandboxUrlBase: http://localhost:8444
 
 
 mysql:

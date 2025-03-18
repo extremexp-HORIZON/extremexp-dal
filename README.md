@@ -79,19 +79,24 @@ This project is set up using Docker and Docker Compose to create a development e
 
 3. **Update Configuration:**
 
-   By default, the app is set to run on localhost on HTTP (via Docker). If you want to access it via a different URL and use HTTPS, create the `server/config/development.yaml` file and set the URL configuration:
+   By default, the app is set to run on localhost on HTTP (via Docker). If you want to access it via a different URL and use HTTPS, change the `server/config/local.yaml` file and set the URL configuration:
 
    ```yaml
    www:
-     trustedPortIsHttps: true
-     sandboxPortIsHttps: true
-     apiPortIsHttps: true
-   
-     trustedUrlBase: https://expvis.smartarch.cz
-     sandboxUrlBase: https://sbox.expvis.smartarch.cz
+
+  trustedPort: 8443
+  trustedPortIsHttps: false
+  sandboxPort: 8444
+  sandboxPortIsHttps: false
+  apiPort: 8445
+  apiPortIsHttps: false
+
+  trustedUrlBase: {CHANGE to address of the host for base}
+  sandboxUrlBase: {CHANGE to address of the host for sandbox}
+
    ```
    
-   Possibly also update other configuration (e.g., `mysql.password`). See [`server/config/default.yaml`](server/config/default.yaml) for default values.
+   For exmaple, if you are running the `expvis` on a remote machine, set the IP of the machine as `http://x.x.x.x:8443` and `http://x.x.x.x:8444`.
 
 4. **Build the Docker Images:**
 
@@ -109,7 +114,7 @@ This project is set up using Docker and Docker Compose to create a development e
    - **MariaDB** on port `3305`
    - **Redis** on port `6380`
    - **Elasticsearch** on ports `9200` and `9300`
-   - **expvis Application** on ports `8443`, `8444`, and `8445`
+   - **expvis aplication** on ports `8443`, `8444`, and `8445`
 
 6. **Access the Application:**
 
@@ -118,6 +123,8 @@ This project is set up using Docker and Docker Compose to create a development e
    - [https://localhost:8443](https://localhost:8443)
    - [https://localhost:8444](https://localhost:8444)
    - [https://localhost:8445](https://localhost:8445)
+
+   While openning the localhost, the credential to login as admin are "username:admin" and "password:test"
 
 ## Additional Information
 
@@ -130,7 +137,7 @@ This project is set up using Docker and Docker Compose to create a development e
 
 The following environment variables are set in the `docker-compose.yml`:
 
-- **NODE_ENV**: `development`
+- **NODE_ENV**: `local`
 - **MYSQL_USER**: `expvis`
 - **MYSQL_PASSWORD**: `expvis`
 - **MYSQL_DATABASE**: `expvis`
