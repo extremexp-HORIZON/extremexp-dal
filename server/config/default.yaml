@@ -2,7 +2,6 @@ enabledLanguages:
 - en-US
 
 www:
-  host: expvis-expvis-1
 
   trustedPort: 8443
   trustedPortIsHttps: false
@@ -14,15 +13,16 @@ www:
   trustedUrlBase: http://localhost:8443
   sandboxUrlBase: http://localhost:8444
 
+
 mysql:
-  host: expvis-mariadb-1
+  host: mariadb
   user: expvis
   password: expvis
   database: expvis
   port: 3306
 
 elasticsearch:
-  host: expvis-elasticsearch-1
+  host: elasticsearch
   port: 9200
 
 redis:
