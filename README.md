@@ -23,61 +23,7 @@ This project is set up using Docker and Docker Compose to create a development e
    cd <repository_directory>
    ```
 
-2. **Configure Git Credentials:**
-
-   The Dockerfile requires Git credentials to initialize and update submodules. Follow these steps to securely store and use your credentials:
-
-   - **Store your Git credentials**:
-
-     Run the following command to store your Git credentials:
-
-     ```bash
-     git config --global credential.helper store
-     ```
-
-     Next, execute any Git command that requires authentication (e.g., `git pull`). You will be prompted for your username and password, which will be stored in `~/.git-credentials`.
-
-   - **Retrieve and set the `GIT_CREDENTIALS` environment variable**:
-
-     Open the `~/.git-credentials` file to view your stored credentials:
-
-     ```bash
-     cat ~/.git-credentials
-     ```
-
-     You should see a line similar to:
-
-     ```
-     https://username:password@colab-repo.intracom-telecom.com
-     ```
-
-     Copy this line and set it as the `GIT_CREDENTIALS` environment variable:
-
-     ```bash
-     export GIT_CREDENTIALS="https://username:password@colab-repo.intracom-telecom.com"
-     ```
-
-
-
-   - **Update the Dockerfile**:
-
-     Ensure that the Dockerfile uses the `GIT_CREDENTIALS` environment variable:
-
-     ```dockerfile
-     RUN git config --global credential.helper store && \
-         echo "${GIT_CREDENTIALS}" > ~/.git-credentials && \
-         git submodule update --init --recursive --remote
-     ```
-
-     **NOTE** if the above method did not work, write the credentials directly in the Docker file.
-
-     ```dockerfile
-     RUN git config --global credential.helper store && \
-         echo "https://username:password@colab-repo.intracom-telecom.com" > ~/.git-credentials && \
-         git submodule update --init --recursive --remote
-     ```
-
-3. **Update Configuration:**
+1. **Update Configuration:**
 
    By default, the app is set to run on localhost on HTTP (via Docker). If you want to access it via a different URL and use HTTPS, change the `server/config/local.yaml` file and set the URL configuration:
 
@@ -98,13 +44,13 @@ This project is set up using Docker and Docker Compose to create a development e
    
    For exmaple, if you are running the `expvis` on a remote machine, set the IP of the machine as `http://x.x.x.x:8443` and `http://x.x.x.x:8444`.
 
-4. **Build the Docker Images:**
+1. **Build the Docker Images:**
 
    ```bash
    docker-compose build
    ```
 
-5. **Start the Services:**
+1. **Start the Services:**
 
    ```bash
    docker-compose up
@@ -116,7 +62,7 @@ This project is set up using Docker and Docker Compose to create a development e
    - **Elasticsearch** on ports `9200` and `9300`
    - **expvis aplication** on ports `8443`, `8444`, and `8445`
 
-6. **Access the Application:**
+1. **Access the Application:**
 
    Once all services are up and running, you can access the ExpVis application via:
 
