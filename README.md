@@ -19,8 +19,8 @@ This project is set up using Docker and Docker Compose to create a development e
 1. **Clone the Repository:**
 
    ```bash
-   git clone --recurse-submodules <repository_url>
-   cd <repository_directory>
+      git clone --recurse-submodules <repository_url>
+      cd <repository_directory>
    ```
 
 1. **Update Configuration:**
@@ -28,30 +28,29 @@ This project is set up using Docker and Docker Compose to create a development e
    By default, the app is set to run on localhost on HTTP (via Docker). If you want to access it via a different URL and use HTTPS, change the `server/config/local.yaml` file and set the URL configuration:
 
    ```yaml
-   www:
-
-  trustedPort: 8443
-  trustedPortIsHttps: false
-  sandboxPort: 8444
-  sandboxPortIsHttps: false
-  apiPort: 8445
-  apiPortIsHttps: false
-
-  trustedUrlBase: {CHANGE to address of the host for base}
-  sandboxUrlBase: {CHANGE to address of the host for sandbox}
+      www:
+     trustedPort: 8443
+     trustedPortIsHttps: false
+     sandboxPort: 8444
+     sandboxPortIsHttps: false
+     apiPort: 8445
+     apiPortIsHttps: false
    
+     trustedUrlBase: {CHANGE to address of the host for base}
+     sandboxUrlBase: {CHANGE to address of the host for sandbox}
+   ```
    For exmaple, if you are running the `expvis` on a remote machine, set the IP of the machine as `http://x.x.x.x:8443` and `http://x.x.x.x:8444`.
 
 1. **Build the Docker Images:**
 
    ```bash
-   docker-compose build
+      docker-compose build
    ```
 
 1. **Start the Services:**
 
    ```bash
-   docker-compose up
+      docker-compose up
    ```
 
    This will start the following services:
