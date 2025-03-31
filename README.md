@@ -39,8 +39,6 @@ This project is set up using Docker and Docker Compose to create a development e
 
   trustedUrlBase: {CHANGE to address of the host for base}
   sandboxUrlBase: {CHANGE to address of the host for sandbox}
-
-   ```
    
    For exmaple, if you are running the `expvis` on a remote machine, set the IP of the machine as `http://x.x.x.x:8443` and `http://x.x.x.x:8444`.
 
