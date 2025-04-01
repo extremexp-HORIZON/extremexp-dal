@@ -30,8 +30,8 @@ services:
   # todo: configuration yaml file - ports, passwords
   expvis:
     build:
-      context: ${EXPVIS_REPO_PATH}
-      dockerfile: ${EXPVIS_REPO_PATH}/Dockerfile
+      context: ${DAL_REPO_PATH}
+      dockerfile: ${DAL_REPO_PATH}/Dockerfile
     environment:
       NODE_ENV: local
       MYSQL_USER: expvis
