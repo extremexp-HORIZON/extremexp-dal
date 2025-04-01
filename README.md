@@ -68,7 +68,9 @@ This project is set up using Docker and Docker Compose to create a development e
    - [https://localhost:8444](https://localhost:8444)
    - [https://localhost:8445](https://localhost:8445)
 
-   While openning the localhost, the credential to login as admin are "username:admin" and "password:test"
+   While openning the localhost, the credential to login as admin are "username:admin" and "password:test" in the below interface
+
+   ![alt text](readme-content/first-page.png)
 
 ## Additional Information
 
@@ -85,9 +87,9 @@ The following environment variables are set in the `docker-compose.yml`:
 - **MYSQL_USER**: `expvis`
 - **MYSQL_PASSWORD**: `expvis`
 - **MYSQL_DATABASE**: `expvis`
-- **MYSQL_HOST**: `expvis-mariadb-1`
-- **REDIS_HOST**: `expvis-redis-1`
-- **ELASTICSEARCH_HOST**: `http://elasticsearch:9200`
+- **MYSQL_HOST**: `extremexp-dal-mariadb-1`
+- **REDIS_HOST**: `extremexp-dal-redis-1`
+- **ELASTICSEARCH_HOST**: `http://extremexp-dal-elasticsearch-1:9200`
 - **DMS_PATH**: `/app/services/dms`
 
 ## Volumes
@@ -101,7 +103,7 @@ The following volumes are used to persist data:
 ## Notes
 
 - Ensure that the Git credentials are properly set in the environment to allow submodule updates.
-- The application uses a specific branch (`extremeXP`) for the `ivis-core` repository.
+- The application uses a specific branch (`extremeXP`) for the [ivis-core](https://github.com/smartarch/ivis-core) repository.
 
 
 # Deployed server
