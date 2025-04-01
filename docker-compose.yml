@@ -37,9 +37,9 @@ services:
       MYSQL_USER: expvis
       MYSQL_PASSWORD: expvis
       MYSQL_DATABASE: expvis
-      MYSQL_HOST: expvis-mariadb-1
-      REDIS_HOST: expvis-redis-1
-      ELASTICSEARCH_HOST: http://expvis-elasticsearch-1:9200
+      MYSQL_HOST: extremexp-dal-mariadb-1
+      REDIS_HOST: extremexp-dal-redis-1
+      ELASTICSEARCH_HOST: http://extremexp-dal-elasticsearch-1:9200
       DMS_PATH: /app/services/dms
     ports:
       - "8443:8443"
@@ -50,11 +50,11 @@ services:
       - redis
       - elasticsearch
     volumes:
-      - ${EXPVIS_REPO_PATH}/server/knex/migrations:/app/knex/migrations 
+      - ${DAL_REPO_PATH}/server/knex/migrations:/app/knex/migrations 
     command: >
       /bin/bash -c "
-      ./wait-for-it.sh expvis-mariadb-1:3306 --timeout=60 --strict &&
-      ./wait-for-it.sh expvis-elasticsearch-1:9200 --timeout=60 --strict &&
+      ./wait-for-it.sh extremexp-dal-mariadb-1:3306 --timeout=60 --strict &&
+      ./wait-for-it.sh extremexp-dal-elasticsearch-1:9200 --timeout=60 --strict &&
       node /app/server/index.js
       "
 
