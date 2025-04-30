@@ -17,7 +17,7 @@ WORKDIR /app
 COPY . .
 
 # Initialize and update Git submodules
-RUN git submodule update --init --recursive --remote --merge
+RUN git submodule update --init --recursive 
  
 RUN cd /app/services/dms/repo/extremexp-dsl-framework && git checkout 19d81e568ce9c1d13bc06a0a965a2a7298199344
 RUN cd /app/services/dms/repo/eu.extremexp.dms && git checkout bd3865b684bb7cf8fa48da7532b56eabfdc1f4bb

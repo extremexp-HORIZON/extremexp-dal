@@ -10,8 +10,8 @@ www:
   apiPort: 8445
   apiPortIsHttps: false
 
-  trustedUrlBase: http://localhost:8443
-  sandboxUrlBase: http://localhost:8444
+  trustedUrlBase: http://146.124.106.171:8443
+  sandboxUrlBase: http://146.124.106.171:8444
 
 
 mysql:
