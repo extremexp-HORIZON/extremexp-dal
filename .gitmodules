@@ -1,6 +1,6 @@
-[submodule "services/dms/repo"]
-	path = services/dms/repo
-	url = https://github.com/extremexp-HORIZON/extremexp-dms.git
 [submodule "ivis-core"]
 	path = ivis-core
 	url = https://github.com/smartarch/ivis-core.git
+[submodule "services/dms/repo"]
+	path = services/dms/repo
+	url = git@github.com:extremexp-HORIZON/extremexp-dms.git
