@@ -404,8 +404,13 @@ router.postAsync('/workflows-query', async (req, res) => {
         };
 
         // Query for experimentId
+        // if (req.body.experimentId) {
+        //    query.bool.must.push({ term: { experimentId: req.body.experimentId } });
+        // }
+
+	// Query for experimentId
         if (req.body.experimentId) {
-            query.bool.must.push({ term: { experimentId: req.body.experimentId } });
+            query.bool.must.push({ term: { "experimentId.keyword": req.body.experimentId } });
         }
 
         // Query for status
