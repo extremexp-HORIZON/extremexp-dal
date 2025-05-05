@@ -1,7 +1,25 @@
 FROM node:18.2
 
+# Update package list and install necessary packages
 RUN apt-get update && \
-    apt-get install -y openjdk-17-jdk git && \
+    apt-get install -y wget tar && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for Java installation
+ENV JAVA_VERSION=17.0.12
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# Download and extract OpenJDK 17
+RUN mkdir -p $JAVA_HOME && \
+    wget -q https://download.oracle.com/java/17/archive/jdk-${JAVA_VERSION}_linux-x64_bin.tar.gz -O /tmp/openjdk.tar.gz && \
+    tar -xzf /tmp/openjdk.tar.gz -C $JAVA_HOME --strip-components=1 && \
+    rm /tmp/openjdk.tar.gz
+
+
+RUN apt-get update && \
+    apt-get install -y git && \
     apt-get clean;
 
 RUN wget https://downloads.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz && \
@@ -9,7 +27,7 @@ RUN wget https://downloads.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-
     ln -s /opt/apache-maven-3.9.4 /opt/maven && \
     rm apache-maven-3.9.4-bin.tar.gz
 
-ENV JAVA_HOME /usr/lib/jvm/java-17-openjdk-amd64
+#ENV JAVA_HOME /usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH $JAVA_HOME/bin:/opt/maven/bin:$PATH
 
 WORKDIR /app
