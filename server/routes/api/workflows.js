@@ -447,7 +447,11 @@ router.postAsync('/workflows-query', async (req, res) => {
         // Perform the search
         const body = await elasticsearch.search({
             index: 'workflows',
-            body: { query }
+	    
+            body: { 
+             query,
+	     size: 10000 // maximum before needing "scroll" or "search_after"
+	    }
         });
 
         // Map results
