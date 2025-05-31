@@ -109,3 +109,7 @@ The following volumes are used to persist data:
 # Deployed server
 for the documentation check:
 https://documenter.getpostman.com/view/37096355/2sA3sAio7d
+
+# Swagger documentation
+see [https://app.swaggerhub.com/apis-docs/ExtremeXP/extremexp-dal/1.0.0](https://app.swaggerhub.com/apis-docs/ExtremeXP/extremexp-dal/1.0.0)
+
