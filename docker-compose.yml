@@ -9,11 +9,6 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
 
-  redis:
-    image: redis:latest
-    volumes:
-      - redis_data:/data
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
     environment:
@@ -27,8 +22,7 @@ services:
         hard: -1
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-
-  # todo: configuration yaml file - ports, passwords
+      
   expvis:
     build:
       context: ${DAL_REPO_PATH}
@@ -39,7 +33,6 @@ services:
       MYSQL_PASSWORD: expvis
       MYSQL_DATABASE: expvis
       MYSQL_HOST: extremexp-dal-mariadb-1
-      REDIS_HOST: extremexp-dal-redis-1
       ELASTICSEARCH_HOST: http://extremexp-dal-elasticsearch-1:9200
       DMS_PATH: /app/services/dms
     ports:
@@ -48,7 +41,6 @@ services:
       - "8445:8445"
     depends_on:
       - mariadb
-      - redis
       - elasticsearch
     volumes:
       - ${DAL_REPO_PATH}/server/knex/migrations:/app/knex/migrations 
@@ -61,5 +53,4 @@ services:
 
 volumes:
   mariadb_data:
-  redis_data:
   elasticsearch_data:
