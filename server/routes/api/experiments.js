@@ -244,7 +244,6 @@ router.postAsync('/experiments-sort-workflows/:experimentId', async (req, res) =
                     await getWorkflowById(hit)
                 ))
             );
-            console.log("here - > " + workflows);
             return res.status(200).json(workflows);
         }
         else{
@@ -261,7 +260,10 @@ router.postAsync('/experiments-sort-workflows/:experimentId', async (req, res) =
 const EXPERIMENTS_QUERY_SCHEMA = {
     intent: 'string',
     metadata: 'object',
-    creator: 'object'
+    creator: 'object',
+    page: 'number',
+    pageSize: 'number',
+    sortOrder: 'string'
 };
 
 router.postAsync('/experiments-query', async (req, res) => {
@@ -270,6 +272,16 @@ router.postAsync('/experiments-query', async (req, res) => {
         if (validationResult) {
             return res.status(400).json({ error: `Validation error: ${validationResult}` });
         }
+
+        // Pagination parameters with defaults
+        const page = req.body.page || 1;
+        const pageSize = req.body.pageSize || 10;
+        const from = (page - 1) * pageSize;
+
+        // Sort order parameter (optional): 'asc' or 'desc'
+        const sortOrder = req.body.sortOrder && ['asc', 'desc'].includes(req.body.sortOrder.toLowerCase()) 
+            ? req.body.sortOrder.toLowerCase() 
+            : 'desc';
 
         const query = {
             bool: {
@@ -306,7 +318,14 @@ router.postAsync('/experiments-query', async (req, res) => {
 
         const body = await elasticsearch.search({
             index: 'experiments',
-            body: { query }
+            from: from,
+            size: pageSize,
+            body: { 
+                query,
+                sort: [
+                    { _id: { order: sortOrder } }
+                ]
+            }
         });
 
         const experiments = await Promise.all(body.hits.hits.map(async hit => ({
@@ -316,7 +335,14 @@ router.postAsync('/experiments-query', async (req, res) => {
             }
         })));
 
-        res.status(200).json(experiments);
+        const total = body.hits.total.value;
+        const totalPages = Math.ceil(total / pageSize);
+
+        res.status(200).json({
+            results: experiments,
+            next_page: page < totalPages ? page + 1 : null,
+            prev_page: page > 1 ? page - 1 : null
+        });
     } catch (error) {
         console.error('Error retrieving experiments:', error);
         res.status(500).json({ error: 'Internal server error' });
