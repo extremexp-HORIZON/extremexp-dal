@@ -105,11 +105,14 @@ router.getAsync('/experiments', async (req, res) => {
             experimentsResponse = await elasticsearch.search({
                 index: 'experiments',
                 size: 1000,
-                scroll: '1m', // Keep the search context alive for 1 minute
+                scroll: '1m',
                 body: {
                     query: {
                         match_all: {}
-                    }
+                    },
+                    sort: [
+                        { start: { order: 'desc' } } // newest first
+                    ]
                 }
             });
         } catch (error) {
@@ -125,7 +128,6 @@ router.getAsync('/experiments', async (req, res) => {
                 id: hit._id,
                 ...hit._source
             }
-
         }));
         res.status(200).json({ experiments });
     } catch (error) {

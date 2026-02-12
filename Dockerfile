@@ -22,10 +22,10 @@ RUN apt-get update && \
     apt-get install -y git && \
     apt-get clean;
 
-RUN wget https://downloads.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz && \
-    tar xzvf apache-maven-3.9.4-bin.tar.gz -C /opt && \
-    ln -s /opt/apache-maven-3.9.4 /opt/maven && \
-    rm apache-maven-3.9.4-bin.tar.gz
+RUN wget https://dlcdn.apache.org/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.tar.gz && \
+    tar xzvf apache-maven-3.9.12-bin.tar.gz -C /opt && \
+    ln -s /opt/apache-maven-3.9.12 /opt/maven && \
+    rm apache-maven-3.9.12-bin.tar.gz
 
 #ENV JAVA_HOME /usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH $JAVA_HOME/bin:/opt/maven/bin:$PATH
