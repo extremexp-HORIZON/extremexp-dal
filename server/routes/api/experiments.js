@@ -100,27 +100,39 @@ router.postAsync('/experiments/:experimentId', async (req, res) => {
 
 router.getAsync('/experiments', async (req, res) => {
     try {
+        const page = req.query.page === undefined ? 1 : Number.parseInt(req.query.page, 10);
+        const pageSize = 10;
+
+        if (!Number.isInteger(page) || page < 1) {
+            return res.status(400).json({ error: 'Invalid page number. Page must be a positive integer.' });
+        }
+
         let experimentsResponse;
-        try {
+        // try {
             experimentsResponse = await elasticsearch.search({
                 index: 'experiments',
-                size: 1000,
-                scroll: '1m',
+                size: pageSize,
+                from: (page - 1) * pageSize,
                 body: {
                     query: {
                         match_all: {}
                     },
-                    sort: [
-                        { start: { order: 'desc' } } // newest first
-                    ]
                 }
             });
-        } catch (error) {
-            return res.status(404).json({ error: 'Experiments not found' });
+        // } catch (error) {
+        //     return res.status(404).json({ error: 'Experiments not found A' });
+        // }
+
+        if (!experimentsResponse.hits) {
+            return res.status(404).json({ error: 'Experiments not found B' });
         }
 
-        if (!experimentsResponse.hits || experimentsResponse.hits.total.value === 0) {
-            return res.status(404).json({ error: 'Experiments not found' });
+        const total = typeof experimentsResponse.hits.total === 'number'
+            ? experimentsResponse.hits.total
+            : experimentsResponse.hits.total.value;
+
+        if (total === 0) {
+            return res.status(404).json({ error: 'Experiments not found C' });
         }
 
         const experiments = experimentsResponse.hits.hits.map(hit => ({
@@ -129,7 +141,17 @@ router.getAsync('/experiments', async (req, res) => {
                 ...hit._source
             }
         }));
-        res.status(200).json({ experiments });
+
+        const endpoint = `${req.baseUrl}${req.path}`;
+        const prev = page > 1 ? `${endpoint}?page=${page - 1}` : null;
+        const next = page * pageSize < total ? `${endpoint}?page=${page + 1}` : null;
+
+        res.status(200).json({
+            prev,
+            next,
+            page,
+            experiments
+        });
     } catch (error) {
         console.error('Error retrieving experiments:', error);
         res.status(500).json({ error: 'Internal server error' });

@@ -38,7 +38,7 @@ COPY . .
 
 RUN git submodule update --init --recursive 
 
- 
+
 #RUN cd /app/services/dms/repo/extremexp-dsl-framework && git checkout 19d81e568ce9c1d13bc06a0a965a2a7298199344
 #RUN cd /app/services/dms/repo/eu.extremexp.dms && git checkout bd3865b684bb7cf8fa48da7532b56eabfdc1f4bb
 RUN cd /app/services/dms/repo/ && make
@@ -49,7 +49,7 @@ RUN cd server && npm install
 RUN cd server && npm install express-ws
 
 RUN cd client && npm install
-
+RUN cd client && npm install regenerator-runtime --save
 #RUN cd ivis-core && git checkout extremeXP
 RUN cd ivis-core/server && npm install
 RUN cd ivis-core/client && npm install
