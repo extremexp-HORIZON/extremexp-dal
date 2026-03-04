@@ -101,7 +101,7 @@ router.postAsync('/experiments/:experimentId', async (req, res) => {
 router.getAsync('/experiments', async (req, res) => {
     try {
         const page = req.query.page === undefined ? 1 : Number.parseInt(req.query.page, 10);
-        const pageSize = 10;
+        const pageSize = 1000;
 
         if (!Number.isInteger(page) || page < 1) {
             return res.status(400).json({ error: 'Invalid page number. Page must be a positive integer.' });
